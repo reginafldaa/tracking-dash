@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String?
+  email        String        @unique
+  password     String
+  phone        String?
+  role         Role          @default(USER)
+  image        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  pendaftarans Pendaftaran[]
+}
+
+model Pelatihan {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jadwals     Jadwal[]
+}
+
+model Jadwal {
+  id           String        @id @default(cuid())
+  date         DateTime
+  location     String?
+  pelatihanId  String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  pelatihan    Pelatihan     @relation(fields: [pelatihanId], references: [id], onDelete: Cascade)
+  pendaftarans Pendaftaran[]
+}
+
+model Pendaftaran {
+  id          String            @id @default(cuid())
+  userId      String
+  jadwalId    String
+  documentUrl String?
+  status      StatusPendaftaran @default(MENUNGGU)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  absensis    Absensi[]
+  jadwal      Jadwal            @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sertifikats Sertifikat[]
+}
+
+model Absensi {
+  id            String      @id @default(cuid())
+  pendaftaranId String
+  checkIn       DateTime?
+  checkOut      DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  pendaftaran   Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+}
+
+model Sertifikat {
+  id             String      @id @default(cuid())
+  pendaftaranId  String
+  certificateUrl String
+  issuedAt       DateTime    @default(now())
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  pendaftaran    Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum StatusPendaftaran {
+  MENUNGGU
+  PROSES
+  LULUS
+  GAGAL
+}
