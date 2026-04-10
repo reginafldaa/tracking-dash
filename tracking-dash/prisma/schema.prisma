@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StatusPendaftaran {
+  PROSES
+  LULUS
+  GAGAL
+}
+
+enum StatusJadwal {
+  DRAFT
+  PUBLISHED
+  SELESAI
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String // Hashed password
+  phone         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  pendaftarans  Pendaftaran[]
+  
+  @@map("users")
+}
+
+model Pelatihan {
+  id            String    @id @default(cuid())
+  kode          String    @unique
+  nama          String
+  deskripsi     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  jadwals       Jadwal[]
+  
+  @@map("pelatihans")
+}
+
+model Jadwal {
+  id            String    @id @default(cuid())
+  pelatihanId   String
+  tanggalMulai  DateTime
+  tanggalSelesai DateTime
+  status        StatusJadwal @default(DRAFT)
+  kuota         Int       @default(0)
+  lokasi        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  pelatihan     Pelatihan @relation(fields: [pelatihanId], references: [id], onDelete: Cascade)
+  pendaftarans  Pendaftaran[]
+
+  @@map("jadwals")
+}
+
+model Pendaftaran {
+  id            String    @id @default(cuid())
+  userId        String
+  jadwalId      String
+  status        StatusPendaftaran @default(PROSES)
+  dokumenSyarat String? // URL for UploadThing
+  tanggalDaftar DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jadwal        Jadwal    @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+
+  absensis      Absensi[]
+  sertifikat    Sertifikat?
+
+  @@unique([userId, jadwalId])
+  @@map("pendaftarans")
+}
+
+model Absensi {
+  id            String    @id @default(cuid())
+  pendaftaranId String
+  tanggal       DateTime  @default(now())
+  checkIn       DateTime?
+  checkOut      DateTime?
+  keterangan    String?
+
+  pendaftaran   Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+
+  @@map("absensis")
+}
+
+model Sertifikat {
+  id            String    @id @default(cuid())
+  pendaftaranId String    @unique
+  nomor         String    @unique
+  fileUrl       String // URL to the pdf
+  tanggalTerbit DateTime  @default(now())
+
+  pendaftaran   Pendaftaran @relation(fields: [pendaftaranId], references: [id], onDelete: Cascade)
+
+  @@map("sertifikats")
+}
