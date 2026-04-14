@@ -47,13 +47,13 @@ export default async function AdminDashboardPage() {
 
         {/* Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[600px]">
             <thead>
               <tr className="border-b bg-gray-50/50">
-                <th className="py-4 px-6 font-medium text-gray-600">Nama</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center">Status</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center">Absensi</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center">Aksi</th>
+                <th className="py-4 px-6 font-medium text-gray-600 whitespace-nowrap">Nama</th>
+                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Status</th>
+                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Absensi</th>
+                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody>
