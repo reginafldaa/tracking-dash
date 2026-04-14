@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import {prisma} from "@/lib/prisma"; // Sesuaikan path ini dengan letak file prisma.ts Anda
+import { prisma } from "@/lib/prisma"; 
+
+export const dynamic = 'force-dynamic'; 
 
 // GET: Mengambil semua data sertifikat
 export async function GET() {
@@ -8,7 +10,12 @@ export async function GET() {
       include: {
         pendaftaran: {
           include: {
-            user: true // <-- TAMBAHKAN INI: Mengambil data relasi User
+            user: true, 
+            jadwal: {
+              include: {
+                pelatihan: true 
+              }
+            }
           }
         }
       },
@@ -17,7 +24,7 @@ export async function GET() {
       }
     }); 
     return NextResponse.json(sertifikat, { status: 200 });
-  } catch (error) {
+  } catch (error) { 
     console.error("Error fetching sertifikat:", error);
     return NextResponse.json({ error: "Gagal mengambil data sertifikat" }, { status: 500 });
   }
@@ -29,7 +36,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { pendaftaranId, certificateUrl, issuedAt } = body;
 
-    // Validasi sederhana
     if (!pendaftaranId || !certificateUrl) {
       return NextResponse.json({ error: "pendaftaranId dan certificateUrl wajib diisi" }, { status: 400 });
     }
@@ -38,7 +44,6 @@ export async function POST(request: Request) {
       data: {
         pendaftaranId,
         certificateUrl,
-        // issuedAt opsional dari request, jika tidak ada pakai default(now()) dari schema
         ...(issuedAt && { issuedAt: new Date(issuedAt) }),
       },
     });
