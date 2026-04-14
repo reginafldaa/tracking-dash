@@ -6,7 +6,8 @@ import {
   Building2, 
   LayoutDashboard, 
   Calendar, 
-  Users, 
+  Users,
+  ClipboardList,
   ClipboardCheck, 
   FileBadge 
 } from "lucide-react";
@@ -15,6 +16,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard/admin", icon: LayoutDashboard },
   { name: "Jadwal", href: "/dashboard/admin/jadwal", icon: Calendar },
   { name: "Peserta", href: "/dashboard/admin/peserta", icon: Users },
+  { name: "Pelatihan", href: "/dashboard/admin/pelatihan", icon: ClipboardList },
   { name: "Absensi", href: "/dashboard/admin/absensi", icon: ClipboardCheck },
   { name: "Sertifikat", href: "/dashboard/admin/sertifikat", icon: FileBadge },
 ];

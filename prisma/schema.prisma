@@ -22,9 +22,11 @@ model User {
 
 model Pelatihan {
   id          String   @id @default(cuid())
-  title       String
-  description String?
+  name        String
+  description String?  @db.Text
   image       String?
+  duration    Int      @default(0)
+  status      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   jadwals     Jadwal[]
