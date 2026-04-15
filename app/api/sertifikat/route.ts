@@ -39,7 +39,7 @@ export async function GET() {
 
       for (const pendaftaran of pendingPendaftaran) {
         const userName = pendaftaran.user?.name || "Nama Tidak Diketahui";
-        const pelatihanTitle = pendaftaran.jadwal?.pelatihan?.title || "Pelatihan";
+        const pelatihanName = pendaftaran.jadwal?.pelatihan?.name || "Pelatihan";
         
         const tanggalTerbitObj = new Date();
         const tanggalTerbit = tanggalTerbitObj.toLocaleDateString('id-ID', { 
@@ -83,7 +83,7 @@ export async function GET() {
         });
 
         // Tulis Deskripsi
-        const descLine1 = `Telah menyelesaikan ${pelatihanTitle} yang`;
+        const descLine1 = `Telah menyelesaikan ${pelatihanName} yang`;
         const descLine2 = `diselenggarakan oleh Liceria & Co pada ${tanggalTerbit}`;
 
         const descWidth1 = fontRegular.widthOfTextAtSize(descLine1, descFontSize);
@@ -173,7 +173,7 @@ export async function POST(request: Request) {
     }
 
     const userName = pendaftaran.user?.name || "Nama Tidak Diketahui";
-    const pelatihanTitle = pendaftaran.jadwal?.pelatihan?.title || "Pelatihan";
+    const pelatihanName = pendaftaran.jadwal?.pelatihan?.name || "Pelatihan";
     
     // Format Tanggal: "14 April 2026"
     const tanggalTerbit = issuedAt 
@@ -201,20 +201,19 @@ export async function POST(request: Request) {
     const namaPeserta = userName.toUpperCase(); 
 
     // --- PENGATURAN UKURAN FONT ---
-    const nameFontSize = 80; // Sesuai permintaan
-    const descFontSize = 20; // Sesuai permintaan
+    const nameFontSize = 80; 
+    const descFontSize = 30; // Diperbesar dari 20 ke 30
 
     // --- PENGATURAN KOORDINAT (Sumbu Y dimulai dari BAWAH) ---
-    // Titik acuan tengah halaman
     const centerY = height / 2; 
-    
-    // Silakan sesuaikan angka plus/minus ini jika posisinya kurang pas dengan template
-    const yPosisiNama = centerY + 40; 
-    const yPosisiGaris = centerY - 15;
-    const yPosisiDeskripsi1 = centerY - 55; // Baris pertama
-    const yPosisiDeskripsi2 = centerY - 85; // Baris kedua (jarak 30px dari baris pertama)
 
-    // 4A. MENULIS NAMA PESERTA (Rata Tengah)
+    // Menyesuaikan posisi agar ada jeda yang pas
+    const yPosisiNama = centerY + 60;        // Nama naik sedikit
+    const yPosisiGaris = centerY - 10;       // Garis tetap di tengah area
+    const yPosisiDeskripsi1 = centerY - 80;  // Jarak dari garis ke teks (jeda diperlebar)
+    const yPosisiDeskripsi2 = centerY - 120; // Jarak antar baris teks
+
+    // 4A. MENULIS NAMA PESERTA
     const nameTextWidth = fontBold.widthOfTextAtSize(namaPeserta, nameFontSize);
     page.drawText(namaPeserta, {
       x: (width / 2) - (nameTextWidth / 2),
@@ -224,21 +223,17 @@ export async function POST(request: Request) {
       color: rgb(0, 0, 0),
     });
 
-    // 4B. MENGGAMBAR GARIS BAWAH (Underline / Pemisah)
-    // Panjang garis mengikuti panjang nama + 100px. Jika nama terlalu pendek, minimal lebarnya adalah 60% halaman.
-    const panjangGaris = Math.max(nameTextWidth + 100, width * 0.6); 
-    const startX = (width / 2) - (panjangGaris / 2);
-    const endX = (width / 2) + (panjangGaris / 2);
-
+    // 4B. MENGGAMBAR GARIS PEMISAH
+    const panjangGaris = Math.max(nameTextWidth + 100, width * 0.7); 
     page.drawLine({
-      start: { x: startX, y: yPosisiGaris },
-      end: { x: endX, y: yPosisiGaris },
-      thickness: 1.5,
+      start: { x: (width / 2) - (panjangGaris / 2), y: yPosisiGaris },
+      end: { x: (width / 2) + (panjangGaris / 2), y: yPosisiGaris },
+      thickness: 2, // Garis dibuat sedikit lebih tebal agar tegas
       color: rgb(0, 0, 0),
     });
 
-    // 4C. MENULIS TEKS DESKRIPSI (Dipech menjadi 2 baris agar presisi seperti gambar)
-    const descLine1 = `Telah menyelesaikan ${pelatihanTitle} yang`;
+    // 4C. MENULIS TEKS DESKRIPSI (2 BARIS)
+    const descLine1 = `Telah menyelesaikan Pelatihan ${pelatihanName} yang`;
     const descLine2 = `diselenggarakan oleh Liceria & Co pada ${tanggalTerbit}`;
 
     // Baris 1
@@ -248,7 +243,7 @@ export async function POST(request: Request) {
       y: yPosisiDeskripsi1, 
       size: descFontSize,
       font: fontRegular,
-      color: rgb(0.2, 0.2, 0.2), // Abu-abu gelap
+      color: rgb(0.1, 0.1, 0.1), // Warna dibuat agak lebih gelap
     });
 
     // Baris 2
@@ -258,7 +253,7 @@ export async function POST(request: Request) {
       y: yPosisiDeskripsi2, 
       size: descFontSize,
       font: fontRegular,
-      color: rgb(0.2, 0.2, 0.2), 
+      color: rgb(0.1, 0.1, 0.1), 
     });
 
     // 5. Simpan file PDF secara lokal di public/sertifikats

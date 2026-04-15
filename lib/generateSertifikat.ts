@@ -21,7 +21,7 @@ export async function autoGenerateSertifikat(pendaftaranId: string) {
 
     // --- LOGIKA GENERATE PDF (Sama persis seperti yang kita buat di POST route.ts) ---
     const userName = pendaftaran.user?.name || "Nama Tidak Diketahui";
-    const pelatihanTitle = pendaftaran.jadwal?.pelatihan?.title || "Pelatihan";
+    const pelatihanName = pendaftaran.jadwal?.pelatihan?.name || "Pelatihan";
     const tanggalTerbitObj = new Date();
     const tanggalTerbit = tanggalTerbitObj.toLocaleDateString("id-ID", {
       day: "numeric",
@@ -68,7 +68,7 @@ export async function autoGenerateSertifikat(pendaftaranId: string) {
       color: rgb(0, 0, 0),
     });
 
-    const descLine1 = `Telah menyelesaikan ${pelatihanTitle} yang`;
+    const descLine1 = `Telah menyelesaikan ${pelatihanName} yang`;
     const descLine2 = `diselenggarakan oleh Liceria & Co pada ${tanggalTerbit}`;
 
     const descWidth1 = fontRegular.widthOfTextAtSize(descLine1, descFontSize);

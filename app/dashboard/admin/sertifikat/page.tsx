@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, Eye, Pencil, Trash2, Calendar } from "lucide-react";
+import { Search, Plus, Eye, Pencil, Trash2, Calendar, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // --- KUMPULAN INTERFACE TYPESCRIPT ---
@@ -15,7 +15,7 @@ type StatusPendaftaran = 'MENUNGGU' | 'PROSES' | 'LULUS' | 'GAGAL';
 
 interface Pelatihan {
   id: string;
-  title: string;
+  name: string;
 }
 
 interface Jadwal {
@@ -91,7 +91,7 @@ export default function AdminSertifikatPage() {
     const searchLower = searchQuery.toLowerCase();
     const userName = item.pendaftaran?.user?.name?.toLowerCase() || "";
     const userEmail = item.pendaftaran?.user?.email?.toLowerCase() || "";
-    const pelatihanName = item.pendaftaran?.jadwal?.pelatihan?.title?.toLowerCase() || "";
+    const pelatihanName = item.pendaftaran?.jadwal?.pelatihan?.name?.toLowerCase() || "";
     
     return (
       userName.includes(searchLower) ||
@@ -202,7 +202,7 @@ export default function AdminSertifikatPage() {
                   <td className="py-4 px-4">
                     <div className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                        {item.pendaftaran?.jadwal?.pelatihan?.title || "Pelatihan tidak diketahui"}
+                        {item.pendaftaran?.jadwal?.pelatihan?.name || "Pelatihan tidak diketahui"}
                       </span>
                       {item.pendaftaran?.jadwal?.date && (
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 gap-1">
@@ -233,7 +233,7 @@ export default function AdminSertifikatPage() {
                   <td className="py-4 px-4">
                     <div className="flex items-center justify-center gap-2">
                       <a href={item.certificateUrl} target="_blank" rel="noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors" title="Lihat Sertifikat">
-                        <Eye className="h-4 w-4" />
+                        <Download className="h-4 w-4" />
                       </a>
                       <button 
                         onClick={() => router.push(`/dashboard/admin/sertifikat/${item.id}/edit`)} 
