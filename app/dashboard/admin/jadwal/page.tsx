@@ -7,6 +7,8 @@ type Jadwal = {
   date: string;
   location: string;
   pelatihanId: string;
+   metode: string;   
+  status: string;
 };
 
 export default function AdminJadwalPage() {
@@ -22,6 +24,8 @@ export default function AdminJadwalPage() {
     date: '',
     location: '',
     pelatihanId: '',
+    metode: '', 
+  status: '',
   });
 
   // FETCH 
@@ -58,6 +62,10 @@ export default function AdminJadwalPage() {
 
   // TAMBAH 
   const handleAdd = async () => {
+    if (!form.date || !form.location || !form.pelatihanId) {
+  alert('Semua field wajib diisi');
+  return;
+}
   const payload = {
     ...form,
     date: new Date(form.date).toISOString(), 
@@ -85,12 +93,24 @@ export default function AdminJadwalPage() {
 
   // EDIT 
   const handleEdit = (item: Jadwal) => {
-    setIsEdit(true);
-    setShowModal(true);
-    setForm(item);
-  };
+  setIsEdit(true);
+  setShowModal(true);
+
+ setForm({
+  id: item.id,
+  date: item.date.split('T')[0],
+  location: item.location,
+  pelatihanId: item.pelatihanId,
+  metode: item.metode || '',
+  status: item.status || '',
+});
+};
 
   const handleUpdate = async () => {
+    if (!form.date || !form.location || !form.pelatihanId) {
+  alert('Semua field wajib diisi');
+  return;
+}
   const payload = {
     ...form,
     date: new Date(form.date).toISOString(),
@@ -142,56 +162,115 @@ export default function AdminJadwalPage() {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow">
-      <div className="flex justify-between mb-4">
-        <h2 className="text-xl font-bold">Data Jadwal</h2>
+      <div className="flex justify-between items-center mb-6">
+  <h2 className="text-xl font-bold">Data Jadwal</h2>
 
-        <button
-          onClick={() => {
-            setShowModal(true);
-            setIsEdit(false);
-          }}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          + Tambah
-        </button>
-      </div>
+  <button
+    onClick={() => {
+      setShowModal(true);
+      setIsEdit(false);
+      setForm({
+        id: '',
+        date: '',
+        location: '',
+        pelatihanId: '',
+        metode: '',
+        status: '',
+      });
+    }}
+    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+  >
+    + Tambah Jadwal
+  </button>
+</div>
 
-      <table className="w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Tanggal</th>
-            <th className="border p-2">Lokasi</th>
-            <th className="border p-2">Pelatihan</th>
-            <th className="border p-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((item) => (
-            <tr key={item.id}>
-              <td className="border p-2">
-                {new Date(item.date).toLocaleDateString()}
-              </td>
-              <td className="border p-2">{item.location}</td>
-              <td className="border p-2">{item.pelatihanId}</td>
-              <td className="border p-2 space-x-2">
-                <button
-                  onClick={() => handleEdit(item)}
-                  className="bg-yellow-400 px-2 py-1 rounded"
-                >
-                  Edit
-                </button>
+    <div className="overflow-hidden">
+  <table className="w-full text-sm">
+    <thead className="bg-gray-50 text-gray-600">
+      <tr>
+        <th className="p-3 text-left">Tanggal</th>
+        <th className="p-3 text-left">Pelatihan</th>
+        <th className="p-3 text-left">Metode Pembelajaran</th>
+        <th className="p-3 text-center">Lokasi</th>
+        <th className="p-3 text-center">Status</th>
+        <th className="p-3 text-center">Aksi</th>
+      </tr>
+    </thead>
 
-                <button
-                  onClick={() => handleDelete(item.id)}
-                  className="bg-red-500 text-white px-2 py-1 rounded"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <tbody>
+      {data.length === 0 ? (
+        <tr>
+          <td colSpan={4} className="text-center p-4 text-gray-400">
+            Belum ada jadwal
+          </td>
+        </tr>
+      ) : (
+        data.map((item) => {
+          const pelatihan = pelatihanList.find(
+            (p: any) => p.id === item.pelatihanId
+          );
+
+          return (
+            <tr
+  key={item.id}
+  className="border-t hover:bg-gray-50 transition"
+>
+  {/* TANGGAL */}
+  <td className="p-3">
+    {new Date(item.date).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })}
+  </td>
+
+  {/* PELATIHAN */}
+  <td className="p-3">
+    {pelatihan?.title || 'Tidak ada'}
+  </td>
+
+  {/* METODE */}
+  <td className="p-3">
+    {item.metode || '-'}
+  </td>
+
+  {/* LOKASI */}
+  <td className="p-3 text-center">
+    {item.metode === 'offline' ? item.location : '-'}
+  </td>
+
+  {/* STATUS */}
+  <td className="p-3 text-center">
+    <span className="bg-gray-200 px-2 py-1 rounded text-xs">
+      {item.status || '-'}
+    </span>
+  </td>
+
+  {/* AKSI */}
+  <td className="p-3 text-center">
+    <div className="flex justify-center gap-2">
+      <button
+        onClick={() => handleEdit(item)}
+        className="bg-yellow-400 hover:bg-yellow-500 px-3 py-1 rounded text-xs"
+      >
+        Edit
+      </button>
+
+      <button
+        onClick={() => handleDelete(item.id)}
+        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+      >
+        Delete
+      </button>
+    </div>
+  </td>
+</tr>
+          );
+        })
+      )}
+    </tbody>
+  </table>
+</div>
 
       {}
       {showModal && (
@@ -230,6 +309,30 @@ export default function AdminJadwalPage() {
       {p.title}
     </option>
   ))}
+</select>
+
+<select
+  name="metode"
+  value={form.metode}
+  onChange={handleChange}
+  className="w-full border p-2 mb-2"
+>
+  <option value="">Pilih Metode</option>
+  <option value="online">Online</option>
+  <option value="offline">Offline</option>
+</select>
+
+<select
+  name="status"
+  value={form.status}
+  onChange={handleChange}
+  className="w-full border p-2 mb-2"
+>
+  <option value="">Pilih Status</option>
+  <option value="pending">Pending</option>
+  <option value="on going">On Going</option>
+  <option value="done">Done</option>
+  <option value="reschedule">Reschedule</option>
 </select>
 
             <div className="flex justify-end gap-2">

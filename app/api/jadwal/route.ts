@@ -30,11 +30,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const {
-      date,
-      location,
-      pelatihanId,
-    } = body;
+    const { date, location, pelatihanId, metode, status } = body;
 
     if (!date || !location || !pelatihanId) {
       return Response.json(
@@ -49,17 +45,19 @@ export async function POST(req: Request) {
     const id = randomUUID();
 
     const result = await pool.query(
-      `INSERT INTO "Jadwal"
-        ("id", "date", "location", "pelatihanId", "createdAt", "updatedAt")
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
-       RETURNING *`,
-      [
-        id,
-        date,
-        location,
-        String(pelatihanId),
-      ]
-    );
+  `INSERT INTO "Jadwal"
+    ("id", "date", "location", "pelatihanId", "metode", "status", "createdAt", "updatedAt")
+   VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+   RETURNING *`,
+  [
+    id,
+    date,
+    location,
+    String(pelatihanId),
+    metode,
+    status,
+  ]
+);
 
     return Response.json({
       success: true,

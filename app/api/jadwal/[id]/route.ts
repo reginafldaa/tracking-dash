@@ -11,7 +11,10 @@ export async function GET(
     [id]
   );
 
-  return Response.json(result.rows[0]);
+  return Response.json({
+  success: true,
+  data: result.rows[0],
+});
 }
 
 //put
@@ -21,18 +24,27 @@ export async function PUT(
 ) {
   try {
     const body = await req.json();
-    const { date, location, pelatihanId } = body;
+    const { date, location, pelatihanId, metode, status } = body;
 
     const result = await pool.query(
-      `UPDATE "Jadwal"
-       SET "date" = $1,
-           "location" = $2,
-           "pelatihanId" = $3,
-           "updatedAt" = NOW()
-       WHERE id = $4
-       RETURNING *`,
-      [date, location, String(pelatihanId), params.id]
-    );
+  `UPDATE "Jadwal"
+   SET "date" = $1,
+       "location" = $2,
+       "pelatihanId" = $3,
+       "metode" = $4,
+       "status" = $5,
+       "updatedAt" = NOW()
+   WHERE id = $6
+   RETURNING *`,
+  [date, location, String(pelatihanId), metode, status, params.id]
+);
+
+    if (result.rowCount === 0) {
+  return Response.json({
+    success: false,
+    message: 'Data tidak ditemukan',
+  });
+}
 
     return Response.json({
       success: true,
@@ -49,7 +61,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await pool.query(`DELETE FROM "Jadwal" WHERE id = $1`, [params.id]);
+   const result = await pool.query(
+  `DELETE FROM "Jadwal" WHERE id = $1 RETURNING *`,
+  [params.id]
+);
+
+if (result.rowCount === 0) {
+  return Response.json({
+    success: false,
+    message: 'Data tidak ditemukan',
+  });
+}
 
     return Response.json({ success: true });
   } catch (error: any) {
