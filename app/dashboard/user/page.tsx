@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { CheckCircle2, Clock, ChevronRight, BookOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { UserAbsensiClient } from "@/components/user-absensi-client";
 
 export default function UserDashboardPage() {
   const { data: session, status } = useSession();
@@ -128,6 +129,11 @@ export default function UserDashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Absensi Section */}
+      <div className="space-y-4">
+        <UserAbsensiClient />
       </div>
     </div>
   );
