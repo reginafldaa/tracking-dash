@@ -43,7 +43,7 @@ export async function autoGenerateSertifikat(pendaftaranId: string) {
 
     const namaPeserta = userName.toUpperCase();
     const nameFontSize = 80;
-    const descFontSize = 20;
+    const descFontSize = 30;
 
     const centerY = height / 2;
     const yPosisiNama = centerY + 40;
