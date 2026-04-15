@@ -52,7 +52,7 @@ export async function getPelatihanById(id: string) {
   }
 }
 
-export async function createPelatihan(data: PelatihanInput) {
+export async function createPelatihan(data: unknown) {
   try {
     const parsedData = pelatihanSchema.parse(data);
 
@@ -68,7 +68,7 @@ export async function createPelatihan(data: PelatihanInput) {
   }
 }
 
-export async function updatePelatihan(id: string, data: PelatihanInput) {
+export async function updatePelatihan(id: string, data: unknown) {
   try {
     const parsedData = pelatihanSchema.parse(data);
 

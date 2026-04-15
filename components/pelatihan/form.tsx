@@ -4,7 +4,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { pelatihanSchema, type PelatihanInput } from "@/server/pelatihan.schema";
+import { pelatihanSchema, type PelatihanFormInput } from "@/server/pelatihan.schema";
+import type { SubmitHandler } from "react-hook-form";
 import { createPelatihan, updatePelatihan } from "@/server/pelatihan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 interface FormProps {
-  initialData?: PelatihanInput & { id: string };
+  initialData?: PelatihanFormInput & { id: string };
   isEdit?: boolean;
 }
 
@@ -30,23 +31,30 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<PelatihanInput>({
+  } = useForm<PelatihanFormInput>({
     resolver: zodResolver(pelatihanSchema),
-    defaultValues: initialData || {
-      name: "",
-      description: "",
-      image: "",
-      duration: 1,
-      status: true,
-    },
+    defaultValues: initialData
+      ? {
+          ...initialData,
+          tanggal: initialData.tanggal instanceof Date
+            ? initialData.tanggal.toISOString().split("T")[0]
+            : String(initialData.tanggal).split("T")[0],
+        }
+      : {
+          name: "",
+          description: "",
+          image: "",
+          tanggal: "",
+          status: true,
+        },
   });
 
   const isStatusActive = watch("status");
 
-  const onSubmit = async (data: PelatihanInput) => {
+  const onSubmit: SubmitHandler<PelatihanFormInput> = async (data) => {
     setLoading(true);
     setError(null);
-
+    
     const result = isEdit && initialData?.id
       ? await updatePelatihan(initialData.id, data)
       : await createPelatihan(data);
@@ -61,7 +69,7 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
   };
 
   return (
-    <Card className="max-w-2xl mt-6 shadow-sm border-gray-100 dark:border-gray-800">
+    <Card className="max-w-2xl mt-6 shadow-sm border-gray-100">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
@@ -88,18 +96,17 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="duration">Durasi (Jam) <span className="text-red-500">*</span></Label>
+            <Label htmlFor="tanggal">Tanggal Pelatihan <span className="text-red-500">*</span></Label>
             <Input
-              id="duration"
-              type="number"
-              min={1}
-              {...register("duration", { valueAsNumber: true })}
-              className={errors.duration ? "border-red-500 max-w-[150px]" : "max-w-[150px]"}
+              id="tanggal"
+              type="date"
+              {...register("tanggal")}
+              className={errors.tanggal ? "border-red-500 max-w-[200px]" : "max-w-[200px]"}
             />
-            {errors.duration && <p className="text-red-500 text-sm">{errors.duration.message}</p>}
+            {errors.tanggal && <p className="text-red-500 text-sm">{errors.tanggal.message}</p>}
           </div>
 
-          <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border border-gray-100 dark:border-gray-800">
+          <div className="flex items-center space-x-3 bg-gray-50 border-gray-100">
             <Switch
               id="status"
               checked={isStatusActive}
@@ -110,7 +117,7 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
             </Label>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex justify-end space-x-4 pt-4 border-t border-gray-100">
             <Button
               type="button"
               variant="outline"
