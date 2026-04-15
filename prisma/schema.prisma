@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
+  }
 
 model User {
   id           String        @id @default(cuid())
@@ -22,9 +22,11 @@ model User {
 
 model Pelatihan {
   id          String   @id @default(cuid())
-  title       String
-  description String?
+  name        String
+  description String?  @db.Text
   image       String?
+  tanggal     DateTime
+  status      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   jadwals     Jadwal[]

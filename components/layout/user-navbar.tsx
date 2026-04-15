@@ -40,7 +40,6 @@ export function Navbar({ setSidebarOpen }: NavbarProps) {
         </button>
         
         <div className="hidden md:flex items-center text-sm font-medium text-slate-500 dark:text-slate-400 gap-6">
-          <span className="hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors">Blog</span>
           <span className="text-slate-900 dark:text-white border-b-2 border-blue-600 pb-1">Peserta</span>
         </div>
       </div>

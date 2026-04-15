@@ -160,7 +160,7 @@ export default async function AdminDashboardPage() {
 
         {/* Data Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
+          <table className="w-full text-left border-collapse min-w-max">
             <thead>
               <tr className="border-b bg-gray-50/50">
                 <th className="py-4 px-6 font-medium text-gray-600 whitespace-nowrap">Nama Peserta</th>
