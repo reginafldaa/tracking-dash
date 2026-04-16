@@ -157,13 +157,13 @@ export default function AdminSertifikatPage() {
           />
         </div>
         
-        <button 
+        {/* <button 
           onClick={() => router.push('/dashboard/admin/sertifikat/create')}
           className="w-full sm:w-auto bg-[#1a56db] hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Tambah Sertifikat
-        </button>
+        </button> */}
       </div>
 
       {/* Tabel Data */}
