@@ -4,54 +4,86 @@ export async function GET(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const { id } = params;
-
-  const result = await pool.query(
-    `SELECT * FROM "Jadwal" WHERE id = $1`,
-    [id]
-  );
-
-  return Response.json({
-  success: true,
-  data: result.rows[0],
-});
-}
-
-//put
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
   try {
-    const body = await req.json();
-    const { date, location, pelatihanId, metode, status } = body;
+    const { id } = params;
 
     const result = await pool.query(
-  `UPDATE "Jadwal"
-   SET "date" = $1,
-       "location" = $2,
-       "pelatihanId" = $3,
-       "metode" = $4,
-       "status" = $5,
-       "updatedAt" = NOW()
-   WHERE id = $6
-   RETURNING *`,
-  [date, location, String(pelatihanId), metode, status, params.id]
-);
+      `SELECT * FROM "Jadwal" WHERE "id" = $1`,
+      [id]
+    );
 
-    if (result.rowCount === 0) {
-  return Response.json({
-    success: false,
-    message: 'Data tidak ditemukan',
-  });
-}
+    if (result.rows.length === 0) {
+      return Response.json(
+        { success: false, message: 'Data tidak ditemukan' },
+        { status: 404 }
+      );
+    }
 
     return Response.json({
       success: true,
       data: result.rows[0],
     });
+
   } catch (error: any) {
-    return Response.json({ success: false, message: error.message });
+    return Response.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+//put
+export async function PUT(
+  req: Request,
+  context: any
+) {
+  try {
+    const id = context?.params?.id;
+
+    console.log('PARAMS:', context);
+    console.log('ID:', id);
+
+    if (!id) {
+      return Response.json({
+        success: false,
+        message: 'ID tidak dikirim',
+      });
+    }
+
+    const body = await req.json();
+    const { date, location, pelatihanId, status } = body;
+
+    const result = await pool.query(
+      `UPDATE "Jadwal"
+       SET "date" = $1,
+           "location" = $2,
+           "pelatihanId" = $3,
+           "status" = $4,
+           "updatedAt" = NOW()
+       WHERE "id" = $5
+       RETURNING *`,
+      [date, location, String(pelatihanId), status, id]
+    );
+
+    if (result.rowCount === 0) {
+      return Response.json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
+
+    return Response.json({
+      success: true,
+      data: result.rows[0],
+    });
+
+  } catch (error: any) {
+    console.error('UPDATE ERROR:', error);
+
+    return Response.json({
+      success: false,
+      message: error.message,
+    });
   }
 }
 

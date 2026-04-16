@@ -37,6 +37,8 @@ model Jadwal {
   date         DateTime
   location     String?
   pelatihanId  String
+  status       String 
+  metode       String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   pelatihan    Pelatihan     @relation(fields: [pelatihanId], references: [id], onDelete: Cascade)
