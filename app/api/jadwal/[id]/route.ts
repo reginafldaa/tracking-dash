@@ -2,10 +2,10 @@ import { pool } from '@/lib/db';
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const result = await pool.query(
       `SELECT * FROM "Jadwal" WHERE "id" = $1`,
@@ -35,13 +35,10 @@ export async function GET(
 //put
 export async function PUT(
   req: Request,
-  context: any
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = context?.params?.id;
-
-    console.log('PARAMS:', context);
-    console.log('ID:', id);
+    const { id } = await params;
 
     if (!id) {
       return Response.json({
@@ -90,20 +87,21 @@ export async function PUT(
 //delete
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-   const result = await pool.query(
-  `DELETE FROM "Jadwal" WHERE id = $1 RETURNING *`,
-  [params.id]
-);
+    const { id } = await params;
+    const result = await pool.query(
+      `DELETE FROM "Jadwal" WHERE id = $1 RETURNING *`,
+      [id]
+    );
 
-if (result.rowCount === 0) {
-  return Response.json({
-    success: false,
-    message: 'Data tidak ditemukan',
-  });
-}
+    if (result.rowCount === 0) {
+      return Response.json({
+        success: false,
+        message: 'Data tidak ditemukan',
+      });
+    }
 
     return Response.json({ success: true });
   } catch (error: any) {

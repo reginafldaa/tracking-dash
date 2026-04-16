@@ -6,10 +6,26 @@ import { revalidatePath } from "next/cache";
 
 export async function createPendaftaran(data: PendaftaranInput) {
   try {
+    console.log("[PENDAFTARAN] Menerima data:", {
+      namaLengkap: data.namaLengkap,
+      email: data.email,
+      pelatihanId: data.pelatihanId,
+      metode: data.metode,
+      hasFiles: {
+        fotoKtp: !!data.fotoKtp?.substring(0, 50),
+        ijazah: !!data.ijazah?.substring(0, 50),
+        pasFoto: !!data.pasFoto?.substring(0, 50),
+        buktiTransfer: !!data.buktiTransfer?.substring(0, 50),
+      },
+    });
+
     // Validasi data dengan Zod
+    console.log("[PENDAFTARAN] Memvalidasi data dengan Zod...");
     const validatedData = pendaftaranSchema.parse(data);
+    console.log("[PENDAFTARAN] ✓ Validasi Zod berhasil");
 
     // Check apakah user sudah mendaftar pelatihan ini
+    console.log(`[PENDAFTARAN] Checking duplikat: email=${validatedData.email}, pelatihanId=${validatedData.pelatihanId}`);
     const existing = await prisma.pendaftaran.findFirst({
       where: {
         email: validatedData.email,
@@ -18,12 +34,14 @@ export async function createPendaftaran(data: PendaftaranInput) {
     });
 
     if (existing) {
+      console.log("[PENDAFTARAN] ✗ Sudah terdaftar: ID=", existing.id);
       return {
         success: false,
         error: "Anda sudah mendaftar untuk pelatihan ini",
       };
     }
 
+    console.log("[PENDAFTARAN] Membuat record pendaftaran...");
     // Create pendaftaran
     const pendaftaran = await prisma.pendaftaran.create({
       data: validatedData,
@@ -31,6 +49,7 @@ export async function createPendaftaran(data: PendaftaranInput) {
         pelatihan: true,
       },
     });
+    console.log("[PENDAFTARAN] ✓ Record berhasil dibuat: ID=", pendaftaran.id);
 
     revalidatePath("/dashboard/user/pendaftaran");
 
@@ -39,9 +58,12 @@ export async function createPendaftaran(data: PendaftaranInput) {
       data: pendaftaran,
     };
   } catch (error) {
+    console.error("[PENDAFTARAN] ✗ ERROR:", error);
+    const errorMessage = error instanceof Error ? error.message : "Gagal membuat pendaftaran";
+    console.error("[PENDAFTARAN] Error message:", errorMessage);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Gagal membuat pendaftaran",
+      error: errorMessage,
     };
   }
 }

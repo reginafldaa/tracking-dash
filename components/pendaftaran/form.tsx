@@ -25,10 +25,10 @@ export function PendaftaranForm() {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isValid, isDirty },
   } = useForm<PendaftaranInput>({
     resolver: zodResolver(pendaftaranSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       metode: "OFFLINE",
     },
@@ -72,6 +72,9 @@ export function PendaftaranForm() {
   };
 
   const onSubmit: SubmitHandler<PendaftaranInput> = async (formData) => {
+    console.log("[FORM] Button ditekan, form validation:", { isValid, isDirty, errors });
+    console.log("[FORM] Form data yang valid:", formData);
+    
     setLoading(true);
     setError(null);
 
@@ -80,11 +83,17 @@ export function PendaftaranForm() {
       const requiredFiles = ["fotoKtp", "ijazah", "pasFoto", "buktiTransfer"];
       const missingFiles = requiredFiles.filter((f) => !uploadedFiles[f]);
 
+      console.log("[FORM] File upload status:", { uploadedFiles, missingFiles });
+
       if (missingFiles.length > 0) {
-        setError(`File berikut belum diupload: ${missingFiles.join(", ")}`);
+        const msg = `File berikut belum diupload: ${missingFiles.join(", ")}`;
+        console.log("[FORM] ✗ File tidak lengkap:", msg);
+        setError(msg);
         setLoading(false);
         return;
       }
+      
+      console.log("[FORM] ✓ Semua file sudah diupload");
 
       // Prepare submit data dengan URLs
       const submitData = {
@@ -96,7 +105,15 @@ export function PendaftaranForm() {
         buktiTransfer: uploadedFiles.buktiTransfer,
       };
 
+      console.log("[FORM] Mengirim data pendaftaran:", {
+        namaLengkap: submitData.namaLengkap,
+        email: submitData.email,
+        pelatihanId: submitData.pelatihanId,
+      });
+
       const result = await createPendaftaran(submitData);
+
+      console.log("[FORM] Response dari server:", { success: result.success, error: result.error });
 
       if (result.success) {
         router.push(`/dashboard/user/pendaftaran/success`);
@@ -104,7 +121,9 @@ export function PendaftaranForm() {
         setError(result.error || "Gagal mendaftar");
       }
     } catch (err) {
-      setError("Terjadi kesalahan");
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan";
+      console.error("[FORM] Client error:", errorMessage, err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

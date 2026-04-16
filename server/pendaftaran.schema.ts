@@ -2,6 +2,24 @@ import { z } from "zod";
 
 export const metodeEnum = z.enum(["ONLINE", "OFFLINE"]);
 
+// Validasi untuk URL atau base64 data URL
+const urlOrDataUrl = z.string()
+  .min(1, "File harus diupload")
+  .refine(
+    (value) => {
+      // Accept standard URLs
+      if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('ftp://')) {
+        return true;
+      }
+      // Accept base64 data URLs
+      if (value.startsWith('data:')) {
+        return true;
+      }
+      return false;
+    },
+    { message: "File harus berupa URL atau data URL" }
+  );
+
 export const pendaftaranSchema = z.object({
   namaLengkap: z.string().min(1, "Nama lengkap wajib diisi"),
 
@@ -19,18 +37,15 @@ export const pendaftaranSchema = z.object({
 
   metode: metodeEnum,
 
-  fotoKtp: z.string().url("Foto KTP harus berupa URL"),
+  fotoKtp: urlOrDataUrl,
 
-  ijazah: z.string().url("Ijazah harus berupa URL"),
+  ijazah: urlOrDataUrl,
 
-  pasFoto: z.string().url("Pas foto harus berupa URL"),
+  pasFoto: urlOrDataUrl,
 
-  suratKerja: z
-    .string()
-    .url("Surat kerja harus berupa URL")
-    .optional(),
+  suratKerja: urlOrDataUrl.optional(),
 
-  buktiTransfer: z.string().url("Bukti transfer harus berupa URL"),
+  buktiTransfer: urlOrDataUrl,
 });
 
 export type PendaftaranInput = z.infer<typeof pendaftaranSchema>;
