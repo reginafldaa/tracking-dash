@@ -132,12 +132,16 @@ export function PelatihanTable({ data, total, totalPages, currentPage }: Pelatih
                       </p>
                     </div>
                   </TableCell>
-                  <TableCell className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm whitespace-nowrap">
-                    {new Intl.DateTimeFormat("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric"
-                    }).format(new Date(item.tanggal))}
+                  <TableCell>
+                    {item.tanggal ? (
+                      new Intl.DateTimeFormat("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      }).format(new Date(item.tanggal))
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <Badge

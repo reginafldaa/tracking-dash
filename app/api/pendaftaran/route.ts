@@ -1,17 +1,28 @@
 import { pool } from '@/lib/db';
 import { randomUUID } from 'crypto';
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const result = await pool.query(`
-      SELECT *
-      FROM "Pendaftaran"
-      ORDER BY "createdAt" DESC
-    `);
+    // Kita gunakan Prisma di GET agar otomatis menyusun relasi tabel menjadi JSON yang rapi
+    const result = await prisma.pendaftaran.findMany({
+      include: {
+        user: true,           // Ambil email/nama user untuk dicocokkan dengan session
+        jadwal: {
+          include: {
+            pelatihan: true,  // Ambil judul pelatihannya
+          },
+        },
+        sertifikats: true,     // Ambil data sertifikatnya (URL pdf-nya)
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
     return Response.json({
       success: true,
-      data: result.rows,
+      data: result,
     });
   } catch (error: any) {
     console.error('GET ERROR:', error);
@@ -25,8 +36,6 @@ export async function GET() {
     );
   }
 }
-
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();

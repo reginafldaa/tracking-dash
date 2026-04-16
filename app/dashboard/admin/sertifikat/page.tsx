@@ -124,7 +124,16 @@ export default function AdminSertifikatPage() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 min-h-[500px] transition-colors">
+  <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-black-100">
+          Kelola Sertifikat
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">
+          Mengubah dan hapus data sertifikat untuk peserta.
+        </p>
+      </div>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-8 min-h-[500px] transition-colors">
       
       {/* Area Notifikasi */}
       {notification && (
@@ -142,19 +151,19 @@ export default function AdminSertifikatPage() {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-950 text-gray-900 dark:text-white rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
-            placeholder="Cari Peserta, Email, atau Pelatihan..."
+            placeholder="Cari Peserta atau Pelatihan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
         
-        <button 
+        {/* <button 
           onClick={() => router.push('/dashboard/admin/sertifikat/create')}
           className="w-full sm:w-auto bg-[#1a56db] hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Tambah Sertifikat
-        </button>
+        </button> */}
       </div>
 
       {/* Tabel Data */}
@@ -255,5 +264,6 @@ export default function AdminSertifikatPage() {
         </table>
       </div>
     </div>
+  </div>
   );
 }

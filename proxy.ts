@@ -5,7 +5,9 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const isAuth = !!token;
-    const isAuthPage = req.nextUrl.pathname.startsWith("/login");
+    const isAuthPage = 
+      req.nextUrl.pathname.startsWith("/login") ||
+      req.nextUrl.pathname.startsWith("/register");
 
     if (isAuthPage) {
       if (isAuth) {
