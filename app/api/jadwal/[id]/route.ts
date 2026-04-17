@@ -1,7 +1,12 @@
 import { pool } from '@/lib/db';
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return 'Terjadi kesalahan server';
+}
+
 export async function GET(
-  req: Request,
+  _req: Request,
   { params }: { params: { id: string } }
 ) {
   const { id } = params;
@@ -50,14 +55,14 @@ export async function PUT(
       success: true,
       data: result.rows[0],
     });
-  } catch (error: any) {
-    return Response.json({ success: false, message: error.message });
+  } catch (error) {
+    return Response.json({ success: false, message: getErrorMessage(error) });
   }
 }
 
 //delete
 export async function DELETE(
-  req: Request,
+  _req: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -74,7 +79,7 @@ if (result.rowCount === 0) {
 }
 
     return Response.json({ success: true });
-  } catch (error: any) {
-    return Response.json({ success: false, message: error.message });
+  } catch (error) {
+    return Response.json({ success: false, message: getErrorMessage(error) });
   }
 }

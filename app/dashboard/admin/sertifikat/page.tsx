@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, Eye, Pencil, Trash2, Calendar, Download } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Calendar, Download } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // --- KUMPULAN INTERFACE TYPESCRIPT ---
@@ -118,8 +118,9 @@ export default function AdminSertifikatPage() {
       } else {
         throw new Error("Gagal menghapus data dari database.");
       }
-    } catch (error: any) {
-      setNotification({ type: "error", message: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal menghapus data.";
+      setNotification({ type: "error", message });
     }
   };
 

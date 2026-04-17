@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
+import type { Prisma } from "@prisma/client"
 import { z } from "zod"
 
 const absensiSchema = z.object({
@@ -57,10 +58,23 @@ export async function getAbsensiData(filters?: {
       )
     }
 
-    if (filters?.startDate && filters?.endDate) {
+    if (filters?.startDate || filters?.endDate) {
       filtered = filtered.filter((a) => {
-        const createdDate = new Date(a.createdAt)
-        return createdDate >= filters.startDate! && createdDate <= filters.endDate!
+        const jadwalDate = new Date(a.pendaftaran.jadwal.date)
+        const start = filters.startDate ? new Date(filters.startDate) : null
+        const end = filters.endDate ? new Date(filters.endDate) : null
+
+        if (start) {
+          start.setHours(0, 0, 0, 0)
+        }
+
+        if (end) {
+          end.setHours(23, 59, 59, 999)
+        }
+
+        if (start && jadwalDate < start) return false
+        if (end && jadwalDate > end) return false
+        return true
       })
     }
 
@@ -85,19 +99,19 @@ export async function getPelatihanList() {
     const pelatihans = await prisma.pelatihan.findMany({
       select: {
         id: true,
-        title: true,
+        name: true,
       },
       orderBy: { createdAt: "desc" },
     })
     return { success: true, data: pelatihans }
-  } catch (error) {
+  } catch {
     return { success: false, error: "Gagal mengambil data pelatihan", data: [] }
   }
 }
 
 export async function getJadwalList(pelatihanId?: string) {
   try {
-    let where: any = {}
+    const where: Prisma.JadwalWhereInput = {}
     if (pelatihanId) {
       where.pelatihanId = pelatihanId
     }
@@ -110,14 +124,14 @@ export async function getJadwalList(pelatihanId?: string) {
         location: true,
         pelatihan: {
           select: {
-            title: true,
+            name: true,
           },
         },
       },
       orderBy: { date: "desc" },
     })
     return { success: true, data: jadwals }
-  } catch (error) {
+  } catch {
     return { success: false, error: "Gagal mengambil data jadwal", data: [] }
   }
 }
@@ -157,7 +171,7 @@ export async function updateAbsensi(formData: FormData) {
 
     revalidatePath("/dashboard/admin/absensi")
     return { success: true }
-  } catch (error) {
+  } catch {
     return { success: false, error: "Gagal mengupdate data absensi" }
   }
 }
@@ -167,6 +181,7 @@ export async function getAbsensiStatistics(filters?: {
   jadwalId?: string
   startDate?: Date
   endDate?: Date
+  searchNama?: string
 }) {
   try {
     const absensiData = await getAbsensiData(filters)
@@ -196,7 +211,7 @@ export async function getAbsensiStatistics(filters?: {
       belum,
       persentaseKehadiran,
     }
-  } catch (error) {
+  } catch {
     return {
       total: 0,
       hadir: 0,
@@ -220,7 +235,7 @@ export async function getAbsensiTrendData() {
     })
 
     return { success: true, data: absensiData }
-  } catch (error) {
+  } catch {
     return { success: false, error: "Gagal mengambil trend data", data: [] }
   }
 }
@@ -254,7 +269,7 @@ export async function getUserRegistrations(userId: string) {
 
 export async function getUserAbsensiStatus(userId: string, jadwalId?: string) {
   try {
-    const where: any = {
+    const where: Prisma.AbsensiWhereInput = {
       pendaftaran: {
         userId,
       },

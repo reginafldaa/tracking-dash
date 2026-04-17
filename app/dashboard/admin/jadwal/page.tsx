@@ -11,15 +11,29 @@ type Jadwal = {
   status: string;
 };
 
+type PelatihanOption = {
+  id: string;
+  name: string;
+};
+
+type FormState = {
+  id: string;
+  date: string;
+  location: string;
+  pelatihanId: string;
+  metode: string;
+  status: string;
+};
+
 export default function AdminJadwalPage() {
   const [data, setData] = useState<Jadwal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pelatihanList, setPelatihanList] = useState<any[]>([]);
+  const [pelatihanList, setPelatihanList] = useState<PelatihanOption[]>([]);
 
   const [showModal, setShowModal] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     id: '',
     date: '',
     location: '',
@@ -39,24 +53,25 @@ export default function AdminJadwalPage() {
     setLoading(false);
   };
   const fetchPelatihan = async () => {
-  try {
-    const res = await fetch('/api/pelatihan');
-    const json = await res.json();
+    try {
+      const res = await fetch('/api/pelatihan');
+      const json = await res.json();
 
-    if (json.success) {
-      setPelatihanList(json.data);
+      if (json.success) {
+        setPelatihanList(json.data);
+      }
+    } catch (error) {
+      console.error('FETCH PELATIHAN ERROR:', error);
     }
-  } catch (error) {
-    console.error('FETCH PELATIHAN ERROR:', error);
-  }
-};
+  };
+
   useEffect(() => {
-  fetchData();
-  fetchPelatihan();
-}, []);
+    void fetchData();
+    void fetchPelatihan();
+  }, []);
 
   
-  const handleChange = (e: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -88,7 +103,7 @@ export default function AdminJadwalPage() {
   }
 
   setShowModal(false);
-  fetchData();
+  void fetchData();
 };
 
   // EDIT 
@@ -134,7 +149,7 @@ export default function AdminJadwalPage() {
 
   setShowModal(false);
   setIsEdit(false);
-  fetchData();
+  void fetchData();
 };
 
   // DELETE 
@@ -154,7 +169,7 @@ export default function AdminJadwalPage() {
     return;
   }
 
-  fetchData();
+  void fetchData();
 };
 
   
@@ -207,7 +222,7 @@ export default function AdminJadwalPage() {
       ) : (
         data.map((item) => {
           const pelatihan = pelatihanList.find(
-            (p: any) => p.id === item.pelatihanId
+            (p) => p.id === item.pelatihanId
           );
 
           return (
@@ -226,7 +241,7 @@ export default function AdminJadwalPage() {
 
   {/* PELATIHAN */}
   <td className="p-3">
-    {pelatihan?.title || 'Tidak ada'}
+    {pelatihan?.name || 'Tidak ada'}
   </td>
 
   {/* METODE */}
@@ -304,9 +319,9 @@ export default function AdminJadwalPage() {
   className="w-full border p-2 mb-4"
 >
   <option value="">Pilih Pelatihan</option>
-  {pelatihanList.map((p: any) => (
+  {pelatihanList.map((p) => (
     <option key={p.id} value={p.id}>
-      {p.title}
+      {p.name}
     </option>
   ))}
 </select>

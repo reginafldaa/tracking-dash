@@ -42,7 +42,7 @@ export default function EditSertifikatPage() {
         } else {
           throw new Error("Sertifikat tidak ditemukan");
         }
-      } catch (error) {
+      } catch {
         setNotification({ type: "error", message: "Gagal memuat data dari server." });
       } finally {
         setIsFetchingData(false);
@@ -88,8 +88,9 @@ export default function EditSertifikatPage() {
         router.refresh(); 
       }, 1500);
 
-    } catch (error: any) {
-      setNotification({ type: "error", message: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal mengubah data";
+      setNotification({ type: "error", message });
       setIsLoading(false);
     }
   };

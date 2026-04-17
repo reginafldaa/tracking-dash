@@ -15,7 +15,7 @@ interface PendaftaranDropdown {
   id: string;
   status: string;
   user?: { name: string | null; email: string };
-  jadwal?: { pelatihan?: { title: string } };
+  jadwal?: { pelatihan?: { name: string } };
 }
 
 export default function CreateSertifikatPage() {
@@ -109,8 +109,9 @@ useEffect(() => {
         router.refresh(); 
       }, 1500);
 
-    } catch (error: any) {
-      setNotification({ type: "error", message: error.message });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal menyimpan data ke server";
+      setNotification({ type: "error", message });
       setIsLoading(false);
     }
   };
@@ -161,7 +162,7 @@ useEffect(() => {
             <select disabled value={formData.pendaftaranId} className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed">
               <option value="">-- Otomatis Terisi --</option>
               {pendaftaranList.map((item) => (
-                <option key={item.id} value={item.id}>{item.jadwal?.pelatihan?.title || "Tanpa Pelatihan"}</option>
+                <option key={item.id} value={item.id}>{item.jadwal?.pelatihan?.name || "Tanpa Pelatihan"}</option>
               ))}
             </select>
           </div>

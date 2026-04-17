@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { PrismaClient } from "@prisma/client";
-import { pelatihanSchema, type PelatihanInput } from "./pelatihan.schema";
+import { pelatihanSchema } from "./pelatihan.schema";
 
 const prisma = new PrismaClient();
 

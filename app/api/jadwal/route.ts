@@ -1,6 +1,11 @@
 import { pool } from '@/lib/db';
 import { randomUUID } from 'crypto';
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) return error.message;
+  return 'Terjadi kesalahan server';
+}
+
 export async function GET() {
   try {
     const result = await pool.query(`
@@ -13,13 +18,13 @@ export async function GET() {
       success: true,
       data: result.rows,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('GET JADWAL ERROR:', error);
 
     return Response.json(
       {
         success: false,
-        message: error.message,
+        message: getErrorMessage(error),
       },
       { status: 500 }
     );
@@ -63,13 +68,13 @@ export async function POST(req: Request) {
       success: true,
       data: result.rows[0],
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('POST JADWAL ERROR:', error);
 
     return Response.json(
       {
         success: false,
-        message: error.message,
+        message: getErrorMessage(error),
       },
       { status: 500 }
     );

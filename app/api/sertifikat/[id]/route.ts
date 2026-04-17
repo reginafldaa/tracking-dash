@@ -9,7 +9,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 export const dynamic = 'force-dynamic';
 
 // GET: Mengambil satu sertifikat beserta data User
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(_request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     const sertifikat = await prisma.sertifikat.findUnique({
@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     if (!sertifikat) return NextResponse.json({ error: "Sertifikat tidak ditemukan" }, { status: 404 });
     return NextResponse.json(sertifikat, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 });
   }
 }
@@ -178,7 +178,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 // DELETE: Menghapus data sertifikat
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
     const { id } = await params;
     

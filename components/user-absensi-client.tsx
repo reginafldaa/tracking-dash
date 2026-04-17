@@ -33,7 +33,7 @@ interface Registration {
     date: Date
     location: string | null
     pelatihan: {
-      title: string
+      name: string
     }
   }
   absensis: Array<{
@@ -50,7 +50,7 @@ interface Absensi {
   pendaftaran: {
     jadwal: {
       pelatihan: {
-        title: string
+        name: string
       }
     }
   }
@@ -97,13 +97,19 @@ export function UserAbsensiClient() {
   }, [session?.user?.id])
 
   const handleCheckIn = async (pendaftaranId: string) => {
+    const userId = session?.user?.id
+    if (!userId) {
+      setMessage({ type: "error", text: "Sesi user tidak ditemukan" })
+      return
+    }
+
     setSubmitting(pendaftaranId)
     try {
       const result = await submitCheckIn(pendaftaranId)
       if (result.success) {
         setMessage({ type: "success", text: "Check-in berhasil!" })
         // Refresh data
-        const absenRes = await getUserAbsensiStatus(session?.user?.id!)
+        const absenRes = await getUserAbsensiStatus(userId)
         if (absenRes.success) {
           const statusMap = new Map()
           absenRes.data.forEach((abs) => {
@@ -114,7 +120,7 @@ export function UserAbsensiClient() {
       } else {
         setMessage({ type: "error", text: result.error || "Gagal melakukan check-in" })
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Terjadi kesalahan" })
     } finally {
       setSubmitting(null)
@@ -123,13 +129,19 @@ export function UserAbsensiClient() {
   }
 
   const handleCheckOut = async (pendaftaranId: string) => {
+    const userId = session?.user?.id
+    if (!userId) {
+      setMessage({ type: "error", text: "Sesi user tidak ditemukan" })
+      return
+    }
+
     setSubmitting(pendaftaranId)
     try {
       const result = await submitCheckOut(pendaftaranId)
       if (result.success) {
         setMessage({ type: "success", text: "Check-out berhasil!" })
         // Refresh data
-        const absenRes = await getUserAbsensiStatus(session?.user?.id!)
+        const absenRes = await getUserAbsensiStatus(userId)
         if (absenRes.success) {
           const statusMap = new Map()
           absenRes.data.forEach((abs) => {
@@ -140,7 +152,7 @@ export function UserAbsensiClient() {
       } else {
         setMessage({ type: "error", text: result.error || "Gagal melakukan check-out" })
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: "error", text: "Terjadi kesalahan" })
     } finally {
       setSubmitting(null)
@@ -235,8 +247,6 @@ export function UserAbsensiClient() {
           {registrations.map((registration) => {
             const absensi = absensiStatus.get(registration.id)
             const jadwalDate = new Date(registration.jadwal.date)
-            const isToday =
-              new Date().toDateString() === jadwalDate.toDateString()
 
             return (
               <Card
@@ -247,7 +257,7 @@ export function UserAbsensiClient() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-2">
                       <CardTitle className="text-lg text-slate-800 dark:text-slate-100">
-                        {registration.jadwal.pelatihan.title}
+                        {registration.jadwal.pelatihan.name}
                       </CardTitle>
                       <CardDescription className="flex items-center gap-2">
                         <MapPin className="h-4 w-4" />
@@ -260,7 +270,13 @@ export function UserAbsensiClient() {
 
                 <CardContent className="space-y-4">
                   {/* Schedule Info */}
-                  <div className="grid grid-cols-2 gap-4 py-3 px-3 bg-white/50 dark:bg-slate-900/50 rounded-lg">
+                  <div className="grid grid-cols-1 gap-4 py-3 px-3 bg-white/50 dark:bg-slate-900/50 rounded-lg md:grid-cols-3">
+                    <div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">Nama Pelatihan</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-100">
+                        {registration.jadwal.pelatihan.name}
+                      </p>
+                    </div>
                     <div>
                       <p className="text-sm text-slate-600 dark:text-slate-400">Tanggal Jadwal</p>
                       <p className="font-semibold text-slate-800 dark:text-slate-100">

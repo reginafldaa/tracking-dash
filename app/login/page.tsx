@@ -33,7 +33,7 @@ function LoginForm() {
       } else {
         setError(res.error || "Email atau password salah.");
       }
-    } catch (err) {
+    } catch {
       setError("Terjadi kesalahan sistem, silakan coba lagi.");
     } finally {
       setLoading(false);

@@ -11,8 +11,7 @@ import {
   TrendingUp, 
   Award, 
   User,
-  PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftClose
 } from "lucide-react"
 
 const sidebarItems = [

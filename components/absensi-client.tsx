@@ -2,19 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts"
-import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
@@ -22,7 +9,6 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table"
 import {
-  Calendar,
   Download,
   Filter,
   Search,
@@ -82,7 +68,7 @@ interface AbsensiRecord {
       date: Date
       location: string | null
       pelatihan: {
-        title: string
+        name: string
       }
     }
   }
@@ -90,7 +76,7 @@ interface AbsensiRecord {
 
 interface Pelatihan {
   id: string
-  title: string
+  name: string
 }
 
 interface Jadwal {
@@ -98,7 +84,7 @@ interface Jadwal {
   date: Date
   location: string | null
   pelatihan: {
-    title: string
+    name: string
   }
 }
 
@@ -158,6 +144,17 @@ export function AbsensiClient() {
     }
   }, [])
 
+  const loadJadwals = useCallback(async (pelatihanId?: string) => {
+    try {
+      const jadwalRes = await getJadwalList(pelatihanId)
+      if (jadwalRes.success) {
+        setJadwals(jadwalRes.data)
+      }
+    } catch (error) {
+      console.error("Error loading jadwal list:", error)
+    }
+  }, [])
+
   // Apply filters
   const applyFilters = useCallback(async () => {
     setLoading(true)
@@ -189,6 +186,17 @@ export function AbsensiClient() {
     loadInitialData()
   }, [loadInitialData])
 
+  useEffect(() => {
+    const pelatihanId =
+      selectedPelatihan !== "all" ? selectedPelatihan : undefined
+
+    if (selectedJadwal !== "all") {
+      setSelectedJadwal("all")
+    }
+
+    loadJadwals(pelatihanId)
+  }, [loadJadwals, selectedJadwal, selectedPelatihan])
+
   const columns: ColumnDef<AbsensiRecord>[] = [
     {
       id: "no",
@@ -205,9 +213,9 @@ export function AbsensiClient() {
       ),
     },
     {
-      accessorKey: "pendaftaran.jadwal.pelatihan.title",
+      accessorKey: "pendaftaran.jadwal.pelatihan.name",
       header: "Pelatihan",
-      cell: ({ row }) => <span>{row.original.pendaftaran.jadwal.pelatihan.title}</span>,
+      cell: ({ row }) => <span>{row.original.pendaftaran.jadwal.pelatihan.name}</span>,
     },
     {
       accessorKey: "pendaftaran.jadwal.date",
@@ -291,12 +299,6 @@ export function AbsensiClient() {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-  const chartData = [
-    { name: "Hadir", value: stats.hadir, color: "#10b981" },
-    { name: "Tidak Hadir", value: stats.tidakHadir, color: "#ef4444" },
-    { name: "Belum Selesai", value: stats.belum, color: "#f59e0b" },
-  ]
-
   const exportToCSV = () => {
     if (data.length === 0) {
       alert("Tidak ada data untuk diexport")
@@ -313,7 +315,7 @@ export function AbsensiClient() {
         return [
           index + 1,
           row.pendaftaran.user.name || "-",
-          row.pendaftaran.jadwal.pelatihan.title,
+          row.pendaftaran.jadwal.pelatihan.name,
           new Date(row.pendaftaran.jadwal.date).toLocaleDateString("id-ID"),
           row.checkIn
             ? new Date(row.checkIn).toLocaleTimeString("id-ID", {
@@ -350,7 +352,7 @@ export function AbsensiClient() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Manajemen Absensi</h1>
         <p className="text-gray-500">
-          Lihat, kelola, dan analisis data kehadiran peserta pelatihan
+          Lihat, filter, dan export data kehadiran peserta pelatihan
         </p>
       </div>
 
@@ -386,59 +388,6 @@ export function AbsensiClient() {
           icon={<TrendingUp className="h-6 w-6" />}
           color="bg-purple-100 text-purple-600"
         />
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pie Chart */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold mb-4">Distribusi Kehadiran</h3>
-          {stats.total > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData.filter(d => d.value > 0)}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">
-              Tidak ada data untuk ditampilkan
-            </div>
-          )}
-        </div>
-
-        {/* Bar Chart */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold mb-4">Statistik Kehadiran</h3>
-          {stats.total > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData.filter(d => d.value > 0)}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-400">
-              Tidak ada data untuk ditampilkan
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Filter Section */}
@@ -477,7 +426,7 @@ export function AbsensiClient() {
                 <SelectItem value="all">Semua Pelatihan</SelectItem>
                 {pelatihans.map((p) => (
                   <SelectItem key={p.id} value={p.id}>
-                    {p.title}
+                    {p.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -495,7 +444,7 @@ export function AbsensiClient() {
                 <SelectItem value="all">Semua Jadwal</SelectItem>
                 {jadwals.map((j) => (
                   <SelectItem key={j.id} value={j.id}>
-                    {j.pelatihan.title} -{" "}
+                    {j.pelatihan.name} -{" "}
                     {new Date(j.date).toLocaleDateString("id-ID")}
                   </SelectItem>
                 ))}
