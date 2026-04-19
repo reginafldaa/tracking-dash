@@ -1,384 +1,214 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import type { SubmitHandler } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, CheckCircle } from "lucide-react";
-import { pendaftaranSchema, type PendaftaranInput } from "@/server/pendaftaran.schema";
+import { useState, useEffect } from "react";
 import { createPendaftaran, getPelatihanList } from "@/server/pendaftaran";
-import { useEffect } from "react";
+import { type PendaftaranInput } from "@/server/pendaftaran.schema";
+
+// Tipe data untuk daftar pelatihan
+type PelatihanOption = {
+  id: string;
+  name: string;
+};
 
 export function PendaftaranForm() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pelatihans, setPelatihans] = useState<Array<{ id: string; name: string; tanggal: Date }>>([]);
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pelatihanList, setPelatihanList] = useState<PelatihanOption[]>([]);
+  const [isLoadingPelatihan, setIsLoadingPelatihan] = useState(true);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors, isValid, isDirty },
-  } = useForm<PendaftaranInput>({
-    resolver: zodResolver(pendaftaranSchema),
-    mode: "onChange",
-    defaultValues: {
-      metode: "OFFLINE",
-    },
-  });
-
+  // Mengambil daftar pelatihan saat komponen pertama kali dimuat
   useEffect(() => {
-    const loadPelatihans = async () => {
-      const result = await getPelatihanList();
-      if (result.success) {
-        setPelatihans(result.data);
+    async function fetchPelatihan() {
+      try {
+        const response = await getPelatihanList();
+        if (response.success && response.data) {
+          setPelatihanList(response.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data pelatihan:", error);
+      } finally {
+        setIsLoadingPelatihan(false);
       }
-    };
-    loadPelatihans();
+    }
+    fetchPelatihan();
   }, []);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Ukuran file tidak boleh lebih dari 5MB");
-      return;
-    }
-
-    // Validate file type
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
-    if (!allowedTypes.includes(file.type)) {
-      setError("Format file harus PDF, JPG, atau PNG");
-      return;
-    }
-
-    // For demo: convert to base64 URL (replace with actual upload service)
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setUploadedFiles((prev) => ({ ...prev, [fieldName]: dataUrl }));
-      setError(null);
-    };
-    reader.readAsDataURL(file);
+  // Helper untuk mengubah File menjadi Base64 (Data URL)
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
-  const onSubmit: SubmitHandler<PendaftaranInput> = async (formData) => {
-    console.log("[FORM] Button ditekan, form validation:", { isValid, isDirty, errors });
-    console.log("[FORM] Form data yang valid:", formData);
-    
-    setLoading(true);
-    setError(null);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage(null);
 
     try {
-      // Check if all required files are uploaded
-      const requiredFiles = ["fotoKtp", "ijazah", "pasFoto", "buktiTransfer"];
-      const missingFiles = requiredFiles.filter((f) => !uploadedFiles[f]);
-
-      console.log("[FORM] File upload status:", { uploadedFiles, missingFiles });
-
-      if (missingFiles.length > 0) {
-        const msg = `File berikut belum diupload: ${missingFiles.join(", ")}`;
-        console.log("[FORM] ✗ File tidak lengkap:", msg);
-        setError(msg);
-        setLoading(false);
-        return;
-      }
+      const formData = new FormData(e.currentTarget);
       
-      console.log("[FORM] ✓ Semua file sudah diupload");
-
-      // Prepare submit data dengan URLs
-      const submitData = {
-        ...formData,
-        fotoKtp: uploadedFiles.fotoKtp,
-        ijazah: uploadedFiles.ijazah,
-        pasFoto: uploadedFiles.pasFoto,
-        suratKerja: uploadedFiles.suratKerja || undefined,
-        buktiTransfer: uploadedFiles.buktiTransfer,
+      // Mengumpulkan data teks standar
+      const data: any = {
+        namaLengkap: formData.get("namaLengkap") as string,
+        email: formData.get("email") as string,
+        noTelp: formData.get("noTelp") as string,
+        pekerjaan: formData.get("pekerjaan") as string,
+        instansi: formData.get("instansi") as string,
+        pelatihanId: formData.get("pelatihanId") as string,
+        metode: formData.get("metode") as "ONLINE" | "OFFLINE",
       };
 
-      console.log("[FORM] Mengirim data pendaftaran:", {
-        namaLengkap: submitData.namaLengkap,
-        email: submitData.email,
-        pelatihanId: submitData.pelatihanId,
-      });
-
-      const result = await createPendaftaran(submitData);
-
-      console.log("[FORM] Response dari server:", { success: result.success, error: result.error });
-
-      if (result.success) {
-        router.push(`/dashboard/user/pendaftaran/success`);
-      } else {
-        setError(result.error || "Gagal mendaftar");
+      // Daftar field file yang wajib dan opsional sesuai skema
+      const filesToProcess = ["fotoKtp", "ijazah", "pasFoto", "buktiTransfer", "suratKerja"];
+      
+      for (const field of filesToProcess) {
+        const file = formData.get(field) as File;
+        // Hanya proses jika file ada dan ukurannya lebih dari 0
+        if (file && file.size > 0) {
+          data[field] = await fileToBase64(file);
+        }
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan";
-      console.error("[FORM] Client error:", errorMessage, err);
-      setError(errorMessage);
+
+      // Panggil Server Action
+      const response = await createPendaftaran(data as PendaftaranInput);
+
+      if (response.success) {
+        setMessage({ type: "success", text: "Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi selanjutnya." });
+        (e.target as HTMLFormElement).reset(); // Kosongkan form setelah sukses
+      } else {
+        setMessage({ type: "error", text: response.error || "Terjadi kesalahan saat menyimpan data." });
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setMessage({ type: "error", text: "Terjadi kesalahan sistem saat mengirim data." });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const metode = watch("metode");
-
   return (
-    <Card className="max-w-2xl border-gray-200 dark:border-gray-800 bg-white dark:bg-slate-900 shadow-sm">
-      <CardHeader className="border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-slate-800">
-        <CardTitle className="text-2xl text-gray-900 dark:text-white">
-          Formulir Pendaftaran Pelatihan
-        </CardTitle>
-        <CardDescription className="text-gray-600 dark:text-gray-400">
-          Lengkapi semua field dan upload dokumen yang diperlukan
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="pt-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Error Alert */}
-          {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
-              <p className="text-red-700 dark:text-red-200 text-sm font-medium">{error}</p>
-            </div>
-          )}
-
-          {/* Data Pribadi Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Data Pribadi</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Nama Lengkap */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Nama Lengkap <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  placeholder="John Doe"
-                  className={`bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 dark:text-white ${
-                    errors.namaLengkap ? "border-red-500" : ""
-                  }`}
-                  {...register("namaLengkap")}
-                />
-                {errors.namaLengkap && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.namaLengkap.message}</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Email <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  type="email"
-                  placeholder="john@example.com"
-                  className={`bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 dark:text-white ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.email.message}</p>
-                )}
-              </div>
-
-              {/* No Telepon */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  No. Telepon <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  type="tel"
-                  placeholder="08123456789"
-                  className={`bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 dark:text-white ${
-                    errors.noTelp ? "border-red-500" : ""
-                  }`}
-                  {...register("noTelp")}
-                />
-                {errors.noTelp && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.noTelp.message}</p>
-                )}
-              </div>
-
-              {/* Pekerjaan */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Pekerjaan <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  placeholder="Software Engineer"
-                  className={`bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 dark:text-white ${
-                    errors.pekerjaan ? "border-red-500" : ""
-                  }`}
-                  {...register("pekerjaan")}
-                />
-                {errors.pekerjaan && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.pekerjaan.message}</p>
-                )}
-              </div>
-
-              {/* Instansi */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Instansi <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  placeholder="PT Example Indonesia"
-                  className={`bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 dark:text-white ${
-                    errors.instansi ? "border-red-500" : ""
-                  }`}
-                  {...register("instansi")}
-                />
-                {errors.instansi && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.instansi.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Pendaftaran Section */}
-          <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Informasi Pendaftaran</h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Pelatihan */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Pelatihan <span className="text-red-500">*</span>
-                </Label>
-                <select
-                  className={`w-full px-3 py-2 bg-white dark:bg-slate-800 border rounded-md dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.pelatihanId ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                  }`}
-                  {...register("pelatihanId")}
-                >
-                  <option value="">-- Pilih Pelatihan --</option>
-                  {pelatihans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({new Date(p.tanggal).toLocaleDateString("id-ID")})
-                    </option>
-                  ))}
-                </select>
-                {errors.pelatihanId && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.pelatihanId.message}</p>
-                )}
-              </div>
-
-              {/* Metode */}
-              <div className="space-y-2">
-                <Label className="text-gray-700 dark:text-gray-300">
-                  Metode <span className="text-red-500">*</span>
-                </Label>
-                <select
-                  className={`w-full px-3 py-2 bg-white dark:bg-slate-800 border rounded-md dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.metode ? "border-red-500" : "border-gray-200 dark:border-gray-700"
-                  }`}
-                  {...register("metode")}
-                >
-                  <option value="ONLINE">Online</option>
-                  <option value="OFFLINE">Offline</option>
-                </select>
-                {errors.metode && (
-                  <p className="text-red-500 dark:text-red-400 text-sm">{errors.metode.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Upload Dokumen Section */}
-          <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Upload Dokumen</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Format: PDF, JPG, PNG | Ukuran max: 5MB
-            </p>
-
-            <div className="grid grid-cols-1 gap-4">
-              {[
-                { field: "fotoKtp", label: "Foto KTP", required: true },
-                { field: "ijazah", label: "Ijazah", required: true },
-                { field: "pasFoto", label: "Pas Foto", required: true },
-                { field: "suratKerja", label: "Surat Kerja (Opsional)", required: false },
-                { field: "buktiTransfer", label: "Bukti Transfer", required: true },
-              ].map(({ field, label, required }) => (
-                <FileUploadField
-                  key={field}
-                  label={label}
-                  fieldName={field as keyof typeof uploadedFiles}
-                  isUploaded={!!uploadedFiles[field]}
-                  onUpload={(e) => handleFileUpload(e, field)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex gap-4 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-              className="flex-1 dark:text-gray-300 dark:border-gray-700"
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Memproses...
-                </>
-              ) : (
-                "Daftar Sekarang"
-              )}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface FileUploadFieldProps {
-  label: string;
-  fieldName: string;
-  isUploaded: boolean;
-  onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-function FileUploadField({ label, fieldName, isUploaded, onUpload }: FileUploadFieldProps) {
-  return (
-    <div className="space-y-2">
-      <Label className="text-gray-700 dark:text-gray-300">{label}</Label>
-      {isUploaded ? (
-        <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-md">
-          <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-          <p className="text-sm font-medium text-green-900 dark:text-green-200">File berhasil diupload</p>
+    <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-md border border-gray-100 dark:border-gray-700">
+      
+      {/* Banner Notifikasi Pesan */}
+      {message && (
+        <div className={`p-4 mb-6 rounded-lg font-medium ${
+          message.type === "success" 
+            ? "bg-green-50 text-green-800 border border-green-200" 
+            : "bg-red-50 text-red-800 border border-red-200"
+        }`}>
+          {message.text}
         </div>
-      ) : (
-        <label className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 transition">
-          <p className="text-sm text-gray-600 dark:text-gray-400">Klik untuk upload</p>
-          <input
-            type="file"
-            className="hidden"
-            accept=".pdf,.jpg,.jpeg,.png"
-            onChange={onUpload}
-          />
-        </label>
       )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* INFORMASI PRIBADI */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2 text-gray-900 dark:text-white">Informasi Pribadi</h3>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Nama Lengkap <span className="text-red-500">*</span></label>
+              <input type="text" name="namaLengkap" required placeholder="Sesuai KTP" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Email <span className="text-red-500">*</span></label>
+              <input type="email" name="email" required placeholder="email@contoh.com" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">No. WhatsApp / Telepon <span className="text-red-500">*</span></label>
+              <input type="tel" name="noTelp" required placeholder="081234567890" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pekerjaan <span className="text-red-500">*</span></label>
+              <input type="text" name="pekerjaan" required placeholder="Contoh: System Analyst" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Instansi / Perusahaan <span className="text-red-500">*</span></label>
+              <input type="text" name="instansi" required placeholder="Nama Perusahaan atau Kampus" className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
+            </div>
+          </div>
+
+          {/* DETAIL PELATIHAN & DOKUMEN */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2 text-gray-900 dark:text-white">Pelatihan & Dokumen</h3>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Pelatihan <span className="text-red-500">*</span></label>
+              <select name="pelatihanId" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800" disabled={isLoadingPelatihan}>
+                <option value="">{isLoadingPelatihan ? "Memuat data pelatihan..." : "-- Pilih Pelatihan --"}</option>
+                {pelatihanList.map((pelatihan) => (
+                  <option key={pelatihan.id} value={pelatihan.id}>
+                    {pelatihan.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Metode Pelatihan <span className="text-red-500">*</span></label>
+              <select name="metode" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="">-- Pilih Metode --</option>
+                <option value="ONLINE">Online (Daring)</option>
+                <option value="OFFLINE">Offline (Tatap Muka)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Upload Foto KTP <span className="text-red-500">*</span></label>
+              <input type="file" name="fotoKtp" accept="image/*" required className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:bg-gray-700 dark:border-gray-600 dark:file:bg-gray-600 dark:file:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Upload Ijazah <span className="text-red-500">*</span></label>
+              <input type="file" name="ijazah" accept="image/*,application/pdf" required className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:bg-gray-700 dark:border-gray-600 dark:file:bg-gray-600 dark:file:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Upload Pas Foto <span className="text-red-500">*</span></label>
+              <input type="file" name="pasFoto" accept="image/*" required className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:bg-gray-700 dark:border-gray-600 dark:file:bg-gray-600 dark:file:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Bukti Transfer <span className="text-red-500">*</span></label>
+              <input type="file" name="buktiTransfer" accept="image/*" required className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:bg-gray-700 dark:border-gray-600 dark:file:bg-gray-600 dark:file:text-white" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Surat Keterangan Kerja <span className="text-gray-400 font-normal">(Opsional)</span></label>
+              <input type="file" name="suratKerja" accept="image/*,application/pdf" className="w-full p-2 border border-gray-300 rounded-lg text-sm bg-gray-50 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:file:bg-gray-600 dark:file:text-white" />
+            </div>
+
+          </div>
+        </div>
+
+        {/* SUBMIT BUTTON */}
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Memproses Pendaftaran...
+              </>
+            ) : "Kirim Pendaftaran"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

@@ -33,14 +33,7 @@ export async function GET() {
   } catch (error) {
     console.error('GET ERROR:', error);
     return Response.json(
-<<<<<<< HEAD
-      {
-        success: false,
-        message: getErrorMessage(error),
-      },
-=======
       { success: false, message: error.message },
->>>>>>> d3f7bfd6aa7302cf46e820b001ae63b1159cd341
       { status: 500 }
     );
   }
@@ -100,21 +93,10 @@ export async function PATCH(req: Request) {
       data: updatedData,
       message: 'Status berhasil diperbarui'
     });
-<<<<<<< HEAD
-  } catch (error) {
-    console.error('POST ERROR:', error);
-
-    return Response.json(
-      {
-        success: false,
-        message: getErrorMessage(error),
-      },
-=======
   } catch (error: any) {
     console.error('PATCH ERROR:', error);
     return Response.json(
       { success: false, message: error.message },
->>>>>>> d3f7bfd6aa7302cf46e820b001ae63b1159cd341
       { status: 500 }
     );
   }

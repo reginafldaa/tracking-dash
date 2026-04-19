@@ -157,7 +157,7 @@ if (form.metode === 'offline' && !form.location) {
   },
   body: JSON.stringify(payload),
 });
-console.log('CLICK UPDATE - selectedId:', selectedId);
+console.log('CLICK UPDATE - selectedId:', form.id);
   let result;
 
 try {

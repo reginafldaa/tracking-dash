@@ -3,26 +3,51 @@
 import { prisma } from "@/lib/prisma";
 import { pendaftaranSchema, type PendaftaranInput } from "@/server/pendaftaran.schema";
 import { revalidatePath } from "next/cache";
+import { writeFile, mkdir } from "fs/promises";
+import path from "path";
+import crypto from "crypto";
+
+// ============================================================================
+// HELPER FUNCTION: Menyimpan Base64 menjadi file fisik
+// ============================================================================
+async function saveBase64File(base64Data: string, prefix: string): Promise<string> {
+  // Jika sudah berupa URL biasa (bukan base64), langsung return
+  if (!base64Data.startsWith("data:")) return base64Data;
+
+  const matches = base64Data.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) throw new Error("Format file tidak valid");
+
+  const mimeType = matches[1];
+  const base64String = matches[2];
+  const buffer = Buffer.from(base64String, "base64");
+  
+  // Ambil ekstensi (contoh: image/jpeg -> jpeg)
+  const extension = mimeType.split("/")[1] || "png";
+  // Buat nama file unik agar tidak tertimpa
+  const fileName = `${prefix}-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.${extension}`;
+  
+  const dirPath = path.join(process.cwd(), "public", "pendaftarans");
+  const filePath = path.join(dirPath, fileName);
+
+  try {
+    // Pastikan folder ada, jika tidak buat otomatis
+    await mkdir(dirPath, { recursive: true });
+    await writeFile(filePath, buffer);
+    return `/pendaftarans/${fileName}`;
+  } catch (error) {
+    console.error(`Gagal menyimpan file ${prefix}:`, error);
+    throw new Error(`Gagal menyimpan file ${prefix}`);
+  }
+}
+
+// ============================================================================
+// MAIN FUNCTIONS
+// ============================================================================
 
 export async function createPendaftaran(data: PendaftaranInput) {
   try {
-    console.log("[PENDAFTARAN] Menerima data:", {
-      namaLengkap: data.namaLengkap,
-      email: data.email,
-      pelatihanId: data.pelatihanId,
-      metode: data.metode,
-      hasFiles: {
-        fotoKtp: !!data.fotoKtp?.substring(0, 50),
-        ijazah: !!data.ijazah?.substring(0, 50),
-        pasFoto: !!data.pasFoto?.substring(0, 50),
-        buktiTransfer: !!data.buktiTransfer?.substring(0, 50),
-      },
-    });
-
-    // Validasi data dengan Zod
     console.log("[PENDAFTARAN] Memvalidasi data dengan Zod...");
     const validatedData = pendaftaranSchema.parse(data);
-    console.log("[PENDAFTARAN] ✓ Validasi Zod berhasil");
 
     // Check apakah user sudah mendaftar pelatihan ini
     console.log(`[PENDAFTARAN] Checking duplikat: email=${validatedData.email}, pelatihanId=${validatedData.pelatihanId}`);
@@ -41,10 +66,33 @@ export async function createPendaftaran(data: PendaftaranInput) {
       };
     }
 
-    console.log("[PENDAFTARAN] Membuat record pendaftaran...");
+    console.log("[PENDAFTARAN] Menyimpan file ke folder public/pendaftarans...");
+    // Simpan file satu per satu dan dapatkan URL-nya
+    const fotoKtpUrl = await saveBase64File(validatedData.fotoKtp, "ktp");
+    const ijazahUrl = await saveBase64File(validatedData.ijazah, "ijazah");
+    const pasFotoUrl = await saveBase64File(validatedData.pasFoto, "pasfoto");
+    const buktiTransferUrl = await saveBase64File(validatedData.buktiTransfer, "transfer");
+    
+    let suratKerjaUrl = null;
+    if (validatedData.suratKerja) {
+      suratKerjaUrl = await saveBase64File(validatedData.suratKerja, "suratkerja");
+    }
+
+    console.log("[PENDAFTARAN] Membuat record pendaftaran di database...");
+    
+    // Replace base64 strings di data dengan URL fisik sebelum masuk ke Prisma
+    const pendaftaranData = {
+      ...validatedData,
+      fotoKtp: fotoKtpUrl,
+      ijazah: ijazahUrl,
+      pasFoto: pasFotoUrl,
+      buktiTransfer: buktiTransferUrl,
+      suratKerja: suratKerjaUrl || undefined,
+    };
+
     // Create pendaftaran
     const pendaftaran = await prisma.pendaftaran.create({
-      data: validatedData,
+      data: pendaftaranData,
       include: {
         pelatihan: true,
       },
@@ -60,7 +108,6 @@ export async function createPendaftaran(data: PendaftaranInput) {
   } catch (error) {
     console.error("[PENDAFTARAN] ✗ ERROR:", error);
     const errorMessage = error instanceof Error ? error.message : "Gagal membuat pendaftaran";
-    console.error("[PENDAFTARAN] Error message:", errorMessage);
     return {
       success: false,
       error: errorMessage,

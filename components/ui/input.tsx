@@ -2,23 +2,6 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-<<<<<<< HEAD
-const Input = React.forwardRef<
-  HTMLInputElement,
-  React.ComponentProps<"input">
->(({ className, type, ...props }, ref) => (
-  <input
-    type={type}
-    className={cn(
-      "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-      className
-    )}
-    ref={ref}
-    {...props}
-  />
-))
-Input.displayName = "Input"
-=======
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
@@ -32,6 +15,5 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
     />
   )
 }
->>>>>>> d3f7bfd6aa7302cf46e820b001ae63b1159cd341
 
 export { Input }
