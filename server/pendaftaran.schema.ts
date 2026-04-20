@@ -33,6 +33,8 @@ export const pendaftaranSchema = z.object({
 
   instansi: z.string().min(1, "Instansi wajib diisi"),
 
+  jadwalId: z.string().min(1, "Jadwal wajib dipilih"),
+
   pelatihanId: z.string().min(1, "Pelatihan wajib dipilih"),
 
   metode: metodeEnum,
@@ -49,3 +51,11 @@ export const pendaftaranSchema = z.object({
 });
 
 export type PendaftaranInput = z.infer<typeof pendaftaranSchema>;
+
+// Type untuk jadwal option di dropdown form
+export type JadwalOption = {
+  id: string;
+  date: Date;
+  metode: string | null;
+  pelatihanName: string;
+};

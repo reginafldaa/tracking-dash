@@ -31,7 +31,8 @@ export async function GET() {
       data: result,
     });
   } catch (error) {
-    console.error('GET ERROR:', error);
+    console.error('ERROR:', error);
+
     return Response.json(
       { success: false, message: getErrorMessage(error) },
       { status: 500 }

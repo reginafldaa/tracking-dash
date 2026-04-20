@@ -38,16 +38,12 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
         name: initialData.name,
         description: initialData.description ?? "",
         image: initialData.image ?? "",
-        tanggal: initialData.tanggal
-        ? new Date(initialData.tanggal as string).toISOString().split("T")[0]
-        : "",
         status: initialData.status,
       }
     : {
         name: "",
         description: "",
         image: "",
-        tanggal: "",
         status: true,
       },
   });
@@ -96,17 +92,6 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
               rows={4}
               {...register("description")}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tanggal">Tanggal Pelatihan <span className="text-red-500">*</span></Label>
-            <Input
-              id="tanggal"
-              type="date"
-              {...register("tanggal")}
-              className={errors.tanggal ? "border-red-500 max-w-[200px]" : "max-w-[200px]"}
-            />
-            {errors.tanggal && <p className="text-red-500 text-sm">{errors.tanggal.message}</p>}
           </div>
 
           <div className="flex items-center space-x-3 bg-gray-50 border-gray-100">
