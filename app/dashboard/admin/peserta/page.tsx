@@ -26,6 +26,11 @@ type Pendaftaran = {
   metode: string;
   status: string;
   documentUrl: string | null;
+  fotoKtp: string;
+  ijazah: string;
+  pasFoto: string;
+  suratKerja: string | null;
+  buktiTransfer: string;
   createdAt: string;
   jadwal?: Jadwal;
   user?: UserData;
@@ -41,7 +46,7 @@ export default function AdminPesertaPage() {
   const fetchData = async () => {
     try {
       const res = await fetch('/api/pendaftaran', {
-        cache: 'no-store' // Memastikan fetch di frontend tidak di-cache
+        cache: 'no-store' 
       });
       const result = await res.json();
 
@@ -85,14 +90,12 @@ export default function AdminPesertaPage() {
     }
   };
 
-  // FUNGSI BARU: Export Data ke CSV
   const handleExportCSV = () => {
     if (data.length === 0) {
       alert('Tidak ada data untuk di-export');
       return;
     }
 
-    // 1. Buat Header Kolom
     const headers = [
       'ID Pendaftaran', 
       'Nama Lengkap', 
@@ -106,14 +109,12 @@ export default function AdminPesertaPage() {
       'Tanggal Daftar'
     ];
 
-    // 2. Petakan Data ke Baris
     const csvRows = data.map((item) => {
       const nama = item.namaLengkap || item.user?.name || '-';
       const email = item.email || item.user?.email || '-';
       const jadwal = item.jadwal ? `${formatDate(item.jadwal.date)} - ${item.jadwal.pelatihan?.name}` : 'Belum memilih jadwal';
       const tanggalDaftar = new Date(item.createdAt).toLocaleDateString('id-ID');
 
-      // Gunakan kutip dua (") untuk menghindari error jika ada koma (,) di dalam text inputan user
       return [
         `"${item.id}"`,
         `"${nama}"`,
@@ -128,10 +129,7 @@ export default function AdminPesertaPage() {
       ].join(',');
     });
 
-    // 3. Gabungkan Header dan Baris
     const csvContent = [headers.join(','), ...csvRows].join('\n');
-
-    // 4. Proses Download File
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -159,6 +157,27 @@ export default function AdminPesertaPage() {
       case 'PROSES': return 'bg-blue-100 text-blue-700 border-blue-300';
       default: return 'bg-yellow-100 text-yellow-700 border-yellow-300';
     }
+  };
+
+  // Komponen pembantu untuk me-render link dokumen
+  const DocumentLink = ({ title, url }: { title: string, url: string | null | undefined }) => {
+    if (!url) return null;
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gray-100 text-gray-500 rounded group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          </div>
+          <span className="font-medium text-sm text-gray-700 group-hover:text-blue-700">{title}</span>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 group-hover:text-blue-600"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+      </a>
+    );
   };
 
   return (
@@ -279,27 +298,32 @@ export default function AdminPesertaPage() {
                 </div>
               </div>
 
+              {/* PERBAIKAN: Menampilkan semua dokumen spesifik */}
               <div className="mt-8 pt-6 border-t border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Berkas Dokumen</p>
-                {selectedPeserta.documentUrl ? (
-                  <a
-                    href={selectedPeserta.documentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium text-sm transition-colors"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
-                    Lihat Dokumen Terlampir
-                  </a>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-gray-500 italic bg-gray-50 p-3 rounded-lg">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Berkas Dokumen</p>
+                
+                {(!selectedPeserta.fotoKtp && !selectedPeserta.ijazah && !selectedPeserta.pasFoto && !selectedPeserta.buktiTransfer && !selectedPeserta.suratKerja && !selectedPeserta.documentUrl) ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 italic bg-gray-50 p-4 rounded-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                     Tidak ada dokumen yang dilampirkan
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <DocumentLink title="KTP" url={selectedPeserta.fotoKtp} />
+                    <DocumentLink title="Ijazah" url={selectedPeserta.ijazah} />
+                    <DocumentLink title="Pas Foto" url={selectedPeserta.pasFoto} />
+                    <DocumentLink title="Bukti Transfer" url={selectedPeserta.buktiTransfer} />
+                    <DocumentLink title="Surat Keterangan Kerja" url={selectedPeserta.suratKerja} />
+                    
+                    {/* Fallback jika ada field documentUrl lama yang masih terisi */}
+                    {selectedPeserta.documentUrl && !selectedPeserta.fotoKtp && (
+                       <DocumentLink title="Dokumen Gabungan / Lainnya" url={selectedPeserta.documentUrl} />
+                    )}
+                  </div>
                 )}
               </div>
+              
             </div>
-
           </div>
         </div>
       )}

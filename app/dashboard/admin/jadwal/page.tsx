@@ -278,7 +278,7 @@ try {
 
   {/* LOKASI */}
   <td className="p-3 text-center">
-    {item.metode === 'offline' ? item.location : '-'}
+    {item.location ? item.location : '-'}
   </td>
 
   {/* STATUS */}

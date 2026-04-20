@@ -33,7 +33,7 @@ export async function GET() {
   } catch (error) {
     console.error('GET ERROR:', error);
     return Response.json(
-      { success: false, message: error.message },
+      { success: false, message: getErrorMessage(error) },
       { status: 500 }
     );
   }
