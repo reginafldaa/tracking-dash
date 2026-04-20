@@ -1,36 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPendaftaran, getPelatihanList } from "@/server/pendaftaran";
-import { type PendaftaranInput } from "@/server/pendaftaran.schema";
-
-// Tipe data untuk daftar pelatihan
-type PelatihanOption = {
-  id: string;
-  name: string;
-};
+import { createPendaftaran, getJadwalList } from "@/server/pendaftaran";
+import { type PendaftaranInput, type JadwalOption } from "@/server/pendaftaran.schema";
 
 export function PendaftaranForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [pelatihanList, setPelatihanList] = useState<PelatihanOption[]>([]);
-  const [isLoadingPelatihan, setIsLoadingPelatihan] = useState(true);
+  const [jadwalList, setJadwalList] = useState<(JadwalOption & { pelatihanId: string })[]>([]);
+  const [selectedJadwal, setSelectedJadwal] = useState<{
+    jadwalId: string;
+    pelatihanId: string;
+    metode: string | null;
+  } | null>(null);
+  const [isLoadingJadwal, setIsLoadingJadwal] = useState(true);
 
-  // Mengambil daftar pelatihan saat komponen pertama kali dimuat
+  // Mengambil daftar jadwal saat komponen pertama kali dimuat
   useEffect(() => {
-    async function fetchPelatihan() {
+    async function fetchJadwal() {
       try {
-        const response = await getPelatihanList();
+        const response = await getJadwalList();
         if (response.success && response.data) {
-          setPelatihanList(response.data);
+          setJadwalList(response.data as any);
         }
       } catch (error) {
-        console.error("Gagal mengambil data pelatihan:", error);
+        console.error("Gagal mengambil data jadwal:", error);
       } finally {
-        setIsLoadingPelatihan(false);
+        setIsLoadingJadwal(false);
       }
     }
-    fetchPelatihan();
+    fetchJadwal();
   }, []);
 
   // Helper untuk mengubah File menjadi Base64 (Data URL)
@@ -51,6 +50,12 @@ export function PendaftaranForm() {
     try {
       const formData = new FormData(e.currentTarget);
       
+      // Validasi jadwal dipilih
+      if (!selectedJadwal) {
+        setMessage({ type: "error", text: "Jadwal wajib dipilih" });
+        return;
+      }
+
       // Mengumpulkan data teks standar
       const data: any = {
         namaLengkap: formData.get("namaLengkap") as string,
@@ -58,7 +63,8 @@ export function PendaftaranForm() {
         noTelp: formData.get("noTelp") as string,
         pekerjaan: formData.get("pekerjaan") as string,
         instansi: formData.get("instansi") as string,
-        pelatihanId: formData.get("pelatihanId") as string,
+        jadwalId: selectedJadwal.jadwalId,
+        pelatihanId: selectedJadwal.pelatihanId,
         metode: formData.get("metode") as "ONLINE" | "OFFLINE",
       };
 
@@ -142,14 +148,38 @@ export function PendaftaranForm() {
             <h3 className="text-lg font-semibold border-b pb-2 text-gray-900 dark:text-white">Pelatihan & Dokumen</h3>
 
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Pelatihan <span className="text-red-500">*</span></label>
-              <select name="pelatihanId" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800" disabled={isLoadingPelatihan}>
-                <option value="">{isLoadingPelatihan ? "Memuat data pelatihan..." : "-- Pilih Pelatihan --"}</option>
-                {pelatihanList.map((pelatihan) => (
-                  <option key={pelatihan.id} value={pelatihan.id}>
-                    {pelatihan.name}
-                  </option>
-                ))}
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Jadwal <span className="text-red-500">*</span></label>
+              <select 
+                required 
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800"
+                disabled={isLoadingJadwal}
+                onChange={(e) => {
+                  const jadwal = jadwalList.find(j => j.id === e.target.value);
+                  if (jadwal) {
+                    setSelectedJadwal({
+                      jadwalId: jadwal.id,
+                      pelatihanId: jadwal.pelatihanId,
+                      metode: jadwal.metode,
+                    });
+                  } else {
+                    setSelectedJadwal(null);
+                  }
+                }}
+              >
+                <option value="">{isLoadingJadwal ? "Memuat data jadwal..." : "-- Pilih Jadwal --"}</option>
+                {jadwalList.map((jadwal) => {
+                  const tanggal = new Intl.DateTimeFormat("id-ID", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }).format(new Date(jadwal.date));
+                  const metodeText = jadwal.metode || "";
+                  return (
+                    <option key={jadwal.id} value={jadwal.id}>
+                      {jadwal.pelatihanName} - {tanggal} {metodeText}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

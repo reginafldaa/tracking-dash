@@ -33,7 +33,6 @@ type Pelatihan = {
   name: string;
   description: string | null;
   image: string | null;
-  tanggal: Date;
   status: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -106,7 +105,6 @@ export function PelatihanTable({ data, total, totalPages, currentPage }: Pelatih
           <TableHeader className="bg-gray-50 dark:bg-gray-900">
             <TableRow className="border-b border-gray-200 dark:border-gray-800 hover:bg-transparent">
               <TableHead className="font-semibold text-gray-700 dark:text-gray-300 px-6 py-4">Nama Pelatihan</TableHead>
-              <TableHead className="font-semibold text-gray-700 dark:text-gray-300 px-6 py-4">Tanggal</TableHead>
               <TableHead className="font-semibold text-gray-700 dark:text-gray-300 px-6 py-4">Status</TableHead>
               <TableHead className="text-right font-semibold text-gray-700 dark:text-gray-300 px-6 py-4">Aksi</TableHead>
             </TableRow>
@@ -114,7 +112,7 @@ export function PelatihanTable({ data, total, totalPages, currentPage }: Pelatih
           <TableBody>
             {data.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={4} className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <TableCell colSpan={3} className="text-center py-12 text-gray-500 dark:text-gray-400">
                   Tidak ada data pelatihan ditemukan.
                 </TableCell>
               </TableRow>
@@ -131,17 +129,6 @@ export function PelatihanTable({ data, total, totalPages, currentPage }: Pelatih
                         {item.description || "-"}
                       </p>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {item.tanggal ? (
-                      new Intl.DateTimeFormat("id-ID", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      }).format(new Date(item.tanggal))
-                    ) : (
-                      <span className="text-gray-400">-</span>
-                    )}
                   </TableCell>
                   <TableCell className="px-6 py-4">
                     <Badge

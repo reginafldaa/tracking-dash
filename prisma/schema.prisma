@@ -25,7 +25,6 @@ model Pelatihan {
   name        String
   description String?  @db.Text
   image       String?
-  tanggal     DateTime
   status      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -73,13 +72,13 @@ model Pendaftaran {
   suratKerja     String?
   buktiTransfer  String
   status         StatusPendaftaran   @default(MENUNGGU)
-  userId         String?
-  jadwalId       String?
+  userId         String
+  jadwalId       String
   documentUrl    String?
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
   pelatihan      Pelatihan           @relation(fields: [pelatihanId], references: [id], onDelete: Cascade)
-  jadwal         Jadwal?             @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  jadwal         Jadwal             @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
   user           User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
   absensis       Absensi[]
   sertifikats    Sertifikat[]
