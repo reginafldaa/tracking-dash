@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Search, Plus, Pencil, Trash2, Calendar, Download } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Calendar, Download, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // --- KUMPULAN INTERFACE TYPESCRIPT ---
@@ -243,7 +243,7 @@ export default function AdminSertifikatPage() {
                   <td className="py-4 px-4">
                     <div className="flex items-center justify-center gap-2">
                       <a href={item.certificateUrl} target="_blank" rel="noreferrer" className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors" title="Lihat Sertifikat">
-                        <Download className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </a>
                       <button 
                         onClick={() => router.push(`/dashboard/admin/sertifikat/${item.id}/edit`)} 

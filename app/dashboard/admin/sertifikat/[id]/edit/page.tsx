@@ -31,7 +31,7 @@ export default function EditSertifikatPage() {
         const data = await res.json();
         if (res.ok) {
           setFormData({
-            namaPeserta: data.pendaftaran?.user?.name || "",
+            namaPeserta: data.pendaftaran?.namaLengkap || data.pendaftaran?.user?.name || "",
             status: data.pendaftaran?.status || "LULUS",
             issuedAt: data.issuedAt ? new Date(data.issuedAt).toISOString().split('T')[0] : "",
           });

@@ -1,55 +1,12 @@
 // api/sertifikat/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma"; 
-import { buildCertificatePDF } from "@/lib/generateSertifikat"; 
 
 export const dynamic = 'force-dynamic'; 
 
 export async function GET() {
   try {
-    const existingSertifikat = await prisma.sertifikat.findMany({ select: { pendaftaranId: true } });
-    const existingIds = existingSertifikat.map(s => s.pendaftaranId);
-
-    const pendingPendaftaran = await prisma.pendaftaran.findMany({
-      where: { status: 'LULUS', id: { notIn: existingIds } },
-      include: { user: true, jadwal: { include: { pelatihan: true } } }
-    });
-
-    if (pendingPendaftaran.length > 0) {
-      for (const pendaftaran of pendingPendaftaran) {
-        
-        // --- FIX DOUBLE GENERATE ---
-        // Cek lagi di database, pastikan pendaftaran ini BENAR-BENAR belum punya sertifikat.
-        // Ini mencegah race-condition saat React Strict Mode memanggil API 2x bersamaan.
-        const alreadyExists = await prisma.sertifikat.findFirst({
-          where: { pendaftaranId: pendaftaran.id }
-        });
-        if (alreadyExists) continue; // Skip jika ternyata sudah dibuat di proses sebelah
-        // ---------------------------
-
-        const userName = pendaftaran.namaLengkap || pendaftaran.user?.name || "Nama Tidak Diketahui";
-        const pelatihanName = pendaftaran.jadwal?.pelatihan?.name || "Pelatihan";
-        const lokasi = pendaftaran.jadwal?.location || "Feducation Jakarta";
-        const tanggalTerbit = new Date();
-        
-        const urutPendaftar = await prisma.pendaftaran.count({ 
-            where: { createdAt: { lte: pendaftaran.createdAt } } 
-        });
-
-        const certificateUrl = await buildCertificatePDF({
-            userName, pelatihanName, lokasi, tanggalTerbit, urutPendaftar
-        });
-
-        await prisma.sertifikat.create({
-          data: {
-            pendaftaranId: pendaftaran.id,
-            certificateUrl,
-            issuedAt: tanggalTerbit,
-          },
-        });
-      }
-    }
-
+    // SANGAT BERSIH: Hanya mengambil data dari database, tidak ada fungsi Generate di sini lagi!
     const sertifikat = await prisma.sertifikat.findMany({
       include: {
         pendaftaran: { include: { user: true, jadwal: { include: { pelatihan: true } } } }
