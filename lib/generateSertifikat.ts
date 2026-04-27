@@ -116,7 +116,6 @@ export async function buildCertificatePDF({ userName, pelatihanName, lokasi, tan
   });
 
   // --- PERUBAHAN: UploadThing Integration ---
-  // --- PERUBAHAN: UploadThing Integration ---
   const pdfBytes = await pdfDoc.save();
   const fileName = `Sertifikat-${userName.replace(/\s+/g, "-")}-${Date.now()}.pdf`;
 
