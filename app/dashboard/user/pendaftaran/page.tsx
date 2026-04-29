@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PendaftaranForm } from "@/components/pendaftaran/form";
 import { Metadata } from "next";
 
@@ -17,7 +18,9 @@ export default function PendaftaranPage() {
           Daftar sebagai peserta dan ikuti pelatihan berkualitas
         </p>
       </div>
-      <PendaftaranForm />
+      <Suspense fallback={<div>Memuat form pendaftaran...</div>}>
+        <PendaftaranForm />
+      </Suspense>
     </div>
   );
 }
