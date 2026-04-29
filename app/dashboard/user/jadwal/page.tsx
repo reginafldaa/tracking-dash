@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+import { useRouter } from 'next/navigation';
 
 type Jadwal = {
   id: string;
@@ -18,40 +18,41 @@ type Pelatihan = {
 };
 
 export default function JadwalUserPage() {
+  const router = useRouter();
   const [filter, setFilter] = useState('semua');
   const [filterMetode, setFilterMetode] = useState('semua');
-const [filterPelatihan, setFilterPelatihan] = useState('semua');
-const [search, setSearch] = useState('');
-const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterPelatihan, setFilterPelatihan] = useState('semua');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [data, setData] = useState<Jadwal[]>([]);
   const [pelatihanList, setPelatihanList] = useState<Pelatihan[]>([]);
   const [loading, setLoading] = useState(true);
 
   const handleUpdateJadwal = async (id: string, updatedData: any) => {
-  try {
-    const res = await fetch(`/api/jadwal/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      // Pastikan updatedData berisi { date, location, pelatihanId, metode, status }
-      body: JSON.stringify(updatedData), 
-    }); 
+    try {
+      const res = await fetch(`/api/jadwal/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Pastikan updatedData berisi { date, location, pelatihanId, metode, status }
+        body: JSON.stringify(updatedData),
+      });
 
-    const json = await res.json();
+      const json = await res.json();
 
-    if (json.success) {
-      alert('Jadwal berhasil diupdate!');
-      // Refresh data di layar agar perubahannya langsung terlihat
-      fetchData(); 
-    } else {
-      alert('Gagal update: ' + json.message);
+      if (json.success) {
+        alert('Jadwal berhasil diupdate!');
+        // Refresh data di layar agar perubahannya langsung terlihat
+        fetchData();
+      } else {
+        alert('Gagal update: ' + json.message);
+      }
+    } catch (error) {
+      console.error('Error updating jadwal:', error);
+      alert('Terjadi kesalahan pada sistem.');
     }
-  } catch (error) {
-    console.error('Error updating jadwal:', error);
-    alert('Terjadi kesalahan pada sistem.');
-  }
-};
+  };
 
   const fetchData = async () => {
     const res = await fetch('/api/jadwal');
@@ -72,17 +73,15 @@ const [debouncedSearch, setDebouncedSearch] = useState('');
   };
 
   useEffect(() => {
-    Promise.all([fetchData(), fetchPelatihan()]).then(() =>
-      setLoading(false)
-    );
+    Promise.all([fetchData(), fetchPelatihan()]).then(() => setLoading(false));
   }, []);
   useEffect(() => {
-  const timer = setTimeout(() => {
-    setDebouncedSearch(search);
-  }, 500);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
 
-  return () => clearTimeout(timer);
-}, [search]);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const getPelatihanName = (id: string) => {
     return pelatihanList.find((p) => p.id === id)?.name || '-';
@@ -114,23 +113,17 @@ const [debouncedSearch, setDebouncedSearch] = useState('');
   if (loading) {
     return <p className="text-center mt-10">Loading jadwal...</p>;
   }
-const filteredData = data.filter((item) => {
-  const matchMetode =
-    filterMetode === 'semua' || item.metode === filterMetode;
+  const filteredData = data.filter((item) => {
+    const matchMetode = filterMetode === 'semua' || item.metode === filterMetode;
 
-  const matchPelatihan =
-    filterPelatihan === 'semua' ||
-    item.pelatihanId === filterPelatihan;
+    const matchPelatihan = filterPelatihan === 'semua' || item.pelatihanId === filterPelatihan;
 
-  const namaPelatihan = pelatihanList.find(
-    (p) => p.id === item.pelatihanId
-  )?.name.toLowerCase() || '';
+    const namaPelatihan = pelatihanList.find((p) => p.id === item.pelatihanId)?.name.toLowerCase() || '';
 
-  const matchSearch =
-    namaPelatihan.includes(debouncedSearch.toLowerCase());
+    const matchSearch = namaPelatihan.includes(debouncedSearch.toLowerCase());
 
-  return matchMetode && matchPelatihan && matchSearch;
-});
+    return matchMetode && matchPelatihan && matchSearch;
+  });
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 dark:text-white">Jadwal Pelatihan</h1>
@@ -163,24 +156,38 @@ const filteredData = data.filter((item) => {
     ))}
   </div>
 
-  {/* FILTER PELATIHAN */}
-<div className="relative flex-1">
-  <select
-    className="
+        {/* FILTER METODE */}
+        <div className="flex gap-2">
+          {['semua', 'online', 'offline'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilterMetode(f)}
+              className={`px-4 py-2 rounded-full text-sm capitalize transition
+          ${filterMetode === f ? 'bg-blue-500 text-white shadow' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        {/* FILTER PELATIHAN */}
+        <div className="relative flex-1">
+          <select
+            className="
       w-full h-10 px-3 pr-10
       border border-gray-300 dark:border-slate-600 rounded-xl
       text-sm bg-white dark:bg-slate-800 dark:text-white
       appearance-none
       focus:outline-none focus:ring-2 focus:ring-blue-500
     "
-  >
-    <option value="">Pilih Pelatihan</option>
-    {pelatihanList.map((p) => (
-      <option key={p.id} value={p.id}>
-        {p.name}
-      </option>
-    ))}
-  </select>
+          >
+            <option value="">Pilih Pelatihan</option>
+            {pelatihanList.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
 
   {/* ICON */}
   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-slate-400 pointer-events-none">
@@ -202,7 +209,7 @@ const filteredData = data.filter((item) => {
   className="group border border-gray-200 dark:border-slate-700 rounded-2xl p-5 bg-white dark:bg-slate-800 
              shadow-sm hover:shadow-xl hover:-translate-y-1 
              transition-all duration-300"
->
+            >
               {/* Nama Pelatihan */}
               <h2 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white group-hover:text-blue-600 transition">
   {getPelatihanName(item.pelatihanId)}
@@ -224,27 +231,17 @@ const filteredData = data.filter((item) => {
               </p>
 
               {/* Status */}
-              <span
-                className={`text-xs px-3 py-1 rounded-full ${getStatusColor(
-                  item.status
-                )}`}
-              >
-                {item.status}
-              </span>
+              <span className={`text-xs px-3 py-1 rounded-full ${getStatusColor(item.status)}`}>{item.status}</span>
 
               {/* Button */}
               <button
-  disabled={item.status === 'done'}
-  onClick={() => alert('Daftar ke ' + item.id)}
-  className={`mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-300
-    ${
-      item.status === 'done'
-        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-        : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:opacity-90 hover:shadow-lg'
-    }`}
->
-  {item.status === 'done' ? 'Selesai' : 'Daftar Sekarang'}
-</button>
+                disabled={item.status === 'done'}
+                onClick={() => router.push(`/dashboard/user/pendaftaran?jadwalId=${item.id}`)}
+                className={`mt-5 w-full py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                    ${item.status === 'done' ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:opacity-90 hover:shadow-lg'}`}
+              >
+                {item.status === 'done' ? 'Selesai' : 'Daftar Sekarang'}
+              </button>
             </div>
           ))}
         </div>

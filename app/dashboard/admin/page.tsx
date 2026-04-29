@@ -82,52 +82,52 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       {/* Metric Cards Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Peserta</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Peserta</CardTitle>
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totalUsers}</div>
-            <p className="text-xs text-gray-500">Peserta terdaftar sistem</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalUsers}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Peserta terdaftar sistem</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Pelatihan</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Pelatihan</CardTitle>
             <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
               <BookOpen className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totalPelatihan}</div>
-            <p className="text-xs text-gray-500">Kategori materi tersedia</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalPelatihan}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Kategori materi tersedia</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Jadwal Kelas</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Jadwal Kelas</CardTitle>
             <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
               <Calendar className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totalJadwal}</div>
-            <p className="text-xs text-gray-500">Sesi berjalan & mendatang</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalJadwal}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Sesi berjalan & mendatang</p>
           </CardContent>
         </Card>
-        <Card className="border-0 shadow-sm bg-white">
+        <Card className="border-0 shadow-sm bg-white dark:bg-slate-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Kelulusan</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Kelulusan</CardTitle>
             <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
               <GraduationCap className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{statusCounts["LULUS"] || 0}</div>
-            <p className="text-xs text-gray-500">Peserta mendapat sertifikat</p>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{statusCounts["LULUS"] || 0}</div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Peserta mendapat sertifikat</p>
           </CardContent>
         </Card>
       </div>
@@ -135,12 +135,12 @@ export default async function AdminDashboardPage() {
       {/* Analytics Charts */}
       <DashboardCharts statusData={statusData} pendaftaranData={pendaftaranData} />
 
-      <div className="bg-white rounded-xl shadow-sm border p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border p-6">
         {/* Header Action Items */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <div className="flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-900">Pendaftaran Terbaru</h2>
-            <p className="text-sm text-gray-500">Daftar peserta yang baru mendaftar pelatihan</p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Pendaftaran Terbaru</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Daftar peserta yang baru mendaftar pelatihan</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <div className="relative w-full sm:w-64">
@@ -148,7 +148,7 @@ export default async function AdminDashboardPage() {
               <input 
                 type="text" 
                 placeholder="Cari data peserta..." 
-                className="w-full pl-9 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white dark:border-slate-600"
               />
             </div>
             <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition justify-center whitespace-nowrap">
@@ -162,22 +162,22 @@ export default async function AdminDashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-max">
             <thead>
-              <tr className="border-b bg-gray-50/50">
-                <th className="py-4 px-6 font-medium text-gray-600 whitespace-nowrap">Nama Peserta</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Status</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Absensi</th>
-                <th className="py-4 px-6 font-medium text-gray-600 text-center whitespace-nowrap">Aksi</th>
+              <tr className="border-b bg-gray-50/50 dark:bg-slate-700">
+                <th className="py-4 px-6 font-medium text-gray-600 dark:text-gray-300 whitespace-nowrap">Nama Peserta</th>
+                <th className="py-4 px-6 font-medium text-gray-600 dark:text-gray-300 text-center whitespace-nowrap">Status</th>
+                <th className="py-4 px-6 font-medium text-gray-600 dark:text-gray-300 text-center whitespace-nowrap">Absensi</th>
+                <th className="py-4 px-6 font-medium text-gray-600 dark:text-gray-300 text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {displayData.map((peserta) => (
-                <tr key={peserta.id} className="border-b hover:bg-gray-50/50 transition-colors">
+                <tr key={peserta.id} className="border-b hover:bg-gray-50/50 dark:hover:bg-slate-700/50 transition-colors">
                   <td className="py-4 px-6">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
                         {peserta.name.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-medium text-gray-900">{peserta.name}</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{peserta.name}</span>
                     </div>
                   </td>
                   <td className="py-4 px-6 text-center">

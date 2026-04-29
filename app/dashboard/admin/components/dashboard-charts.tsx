@@ -11,10 +11,10 @@ type DashboardChartsProps = {
 export default function DashboardCharts({ statusData, pendaftaranData }: DashboardChartsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <Card>
+      <Card className="dark:bg-slate-800">
         <CardHeader>
-          <CardTitle>Persentase Status Pendaftaran</CardTitle>
-          <CardDescription>Distribusi peserta berdasarkan status kelulusan</CardDescription>
+          <CardTitle className="dark:text-white">Persentase Status Pendaftaran</CardTitle>
+          <CardDescription className="dark:text-gray-400">Distribusi peserta berdasarkan status kelulusan</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full">
@@ -42,16 +42,16 @@ export default function DashboardCharts({ statusData, pendaftaranData }: Dashboa
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="dark:bg-slate-800">
         <CardHeader>
-          <CardTitle>Tren Pendaftaran 6 Bulan Terakhir</CardTitle>
-          <CardDescription>Jumlah pendaftaran pelatihan per bulan</CardDescription>
+          <CardTitle className="dark:text-white">Tren Pendaftaran 6 Bulan Terakhir</CardTitle>
+          <CardDescription className="dark:text-gray-400">Jumlah pendaftaran pelatihan per bulan</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={pendaftaranData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" className="dark:stroke-slate-600" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6b7280" }} />
                 <Tooltip cursor={{ fill: "rgba(0,0,0,0.05)" }} contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} />

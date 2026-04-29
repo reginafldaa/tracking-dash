@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { 
   Building2, 
   LayoutDashboard, 
@@ -23,6 +24,11 @@ const navigation = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  
+  const userName = session?.user?.name || "Admin";
+  const userEmail = session?.user?.email || "admin@bnsp.com";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
     <div className="flex flex-col w-64 bg-blue-600 dark:bg-slate-900 text-white min-h-screen hidden md:flex">
@@ -55,11 +61,11 @@ export function AdminSidebar() {
       <div className="p-4 border-t border-blue-500 dark:border-slate-700">
         <div className="flex items-center gap-3 px-4 py-2">
           <div className="h-8 w-8 rounded-full bg-blue-400 flex items-center justify-center font-bold">
-            A
+            {userInitial}
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Admin Start</span>
-            <span className="text-xs text-blue-200">admin@bnsp.com</span>
+            <span className="text-sm font-medium">{userName}</span>
+            <span className="text-xs text-blue-200">{userEmail}</span>
           </div>
         </div>
       </div>

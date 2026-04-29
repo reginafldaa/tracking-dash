@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-<<<<<<< HEAD
-import { createPendaftaran, getPelatihanList, getJadwalByPelatihanId } from "@/server/pendaftaran";
+import { createPendaftaran, getJadwalList } from "@/server/pendaftaran";
 import { type PendaftaranInput } from "@/server/pendaftaran.schema";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 // Tipe data untuk daftar pelatihan
 type PelatihanOption = {
@@ -20,38 +20,47 @@ type JadwalOption = {
   location?: string | null;
   status: string;
   metode?: string | null;
+  pelatihanName?: string;
+  pelatihanId?: string;
 };
-=======
-import { createPendaftaran, getJadwalList } from "@/server/pendaftaran";
-import { type PendaftaranInput, type JadwalOption } from "@/server/pendaftaran.schema";
->>>>>>> 8c6b9d81fab79cf49f2ef92fac7dd999ad3ab543
 
 export function PendaftaranForm() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-<<<<<<< HEAD
   const [pelatihanList, setPelatihanList] = useState<PelatihanOption[]>([]);
   const [isLoadingPelatihan, setIsLoadingPelatihan] = useState(true);
   const [selectedPelatihanId, setSelectedPelatihanId] = useState<string>("");
   const [jadwalList, setJadwalList] = useState<JadwalOption[]>([]);
   const [isLoadingJadwal, setIsLoadingJadwal] = useState(false);
-=======
-  const [jadwalList, setJadwalList] = useState<(JadwalOption & { pelatihanId: string })[]>([]);
   const [selectedJadwal, setSelectedJadwal] = useState<{
     jadwalId: string;
-    pelatihanId: string;
-    metode: string | null;
+    pelatihanId?: string;
+    metode?: string | null;
   } | null>(null);
-  const [isLoadingJadwal, setIsLoadingJadwal] = useState(true);
->>>>>>> 8c6b9d81fab79cf49f2ef92fac7dd999ad3ab543
 
   useEffect(() => {
     async function fetchJadwal() {
       try {
+        setIsLoadingJadwal(true);
         const response = await getJadwalList();
         if (response.success && response.data) {
-          setJadwalList(response.data as any);
+          const jadwals = response.data as JadwalOption[];
+          setJadwalList(jadwals);
+
+          // Auto-select jadwal dari query parameter jika ada
+          const jadwalIdParam = searchParams.get("jadwalId");
+          if (jadwalIdParam) {
+            const jadwal = jadwals.find((j) => j.id === jadwalIdParam);
+            if (jadwal) {
+              setSelectedJadwal({
+                jadwalId: jadwal.id,
+                pelatihanId: jadwal.pelatihanId,
+                metode: jadwal.metode,
+              });
+            }
+          }
         }
       } catch (error) {
         console.error("Gagal mengambil data jadwal:", error);
@@ -60,31 +69,7 @@ export function PendaftaranForm() {
       }
     }
     fetchJadwal();
-  }, []);
-
-<<<<<<< HEAD
-  // Mengambil jadwal ketika pelatihan dipilih
-  useEffect(() => {
-    if (!selectedPelatihanId) {
-      setJadwalList([]);
-      return;
-    }
-
-    async function fetchJadwal() {
-      setIsLoadingJadwal(true);
-      try {
-        const response = await getJadwalByPelatihanId(selectedPelatihanId);
-        if (response.success && response.data) {
-          setJadwalList(response.data);
-        }
-      } catch (error) {
-        console.error("Gagal mengambil data jadwal:", error);
-      } finally {
-        setIsLoadingJadwal(false);
-      }
-    }
-    fetchJadwal();
-  }, [selectedPelatihanId]);
+  }, [searchParams]);
 
   // Helper untuk format tanggal
   const formatTanggal = (date: Date) => {
@@ -106,8 +91,6 @@ export function PendaftaranForm() {
     });
   };
 
-=======
->>>>>>> 9e897c3ead7b074f21c607b8e9b02a24f13a896b
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -131,22 +114,19 @@ export function PendaftaranForm() {
         jadwalId: selectedJadwal.jadwalId,
         pelatihanId: selectedJadwal.pelatihanId,
         metode: formData.get("metode") as "ONLINE" | "OFFLINE",
-        userId: session?.user?.id, // Tambahkan userId dari session
-        jadwalId: formData.get("jadwalId") as string, // Tambahkan jadwalId
+        userId: session?.user?.id,
       };
 
       const filesToProcess = ["fotoKtp", "ijazah", "pasFoto", "buktiTransfer", "suratKerja"];
 
-      // --- PERUBAHAN: Upload File via API UploadThing ---
+      // Upload File via API UploadThing
       for (const field of filesToProcess) {
         const file = formData.get(field) as File;
 
         if (file && file.size > 0) {
-          // Siapkan file untuk dikirim ke API
           const uploadData = new FormData();
           uploadData.append("file", file);
 
-          // Panggil API upload yang sudah kita hubungkan ke UploadThing
           const uploadRes = await fetch("/api/pendaftaran/upload", {
             method: "POST",
             body: uploadData,
@@ -155,7 +135,6 @@ export function PendaftaranForm() {
           const uploadResult = await uploadRes.json();
 
           if (uploadResult.success) {
-            // Simpan URL dari UploadThing (https://utfs.io/....) ke objek data
             data[field] = uploadResult.url;
           } else {
             throw new Error(`Gagal mengunggah ${field}`);
@@ -163,18 +142,14 @@ export function PendaftaranForm() {
         }
       }
 
-      // Kirim data (yang sekarang berisi URL utfs.io, bukan Base64) ke database
       const response = await createPendaftaran(data as PendaftaranInput);
 
       if (response.success) {
         setMessage({ type: "success", text: "Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi selanjutnya." });
-<<<<<<< HEAD
-        (e.target as HTMLFormElement).reset(); // Kosongkan form setelah sukses
+        (e.target as HTMLFormElement).reset();
         setSelectedPelatihanId("");
         setJadwalList([]);
-=======
-        (e.target as HTMLFormElement).reset();
->>>>>>> 9e897c3ead7b074f21c607b8e9b02a24f13a896b
+        setSelectedJadwal(null);
       } else {
         setMessage({ type: "error", text: response.error || "Terjadi kesalahan saat menyimpan data." });
       }
@@ -249,34 +224,11 @@ export function PendaftaranForm() {
             <h3 className="text-lg font-semibold border-b pb-2 text-gray-900 dark:text-white">Pelatihan & Dokumen</h3>
 
             <div>
-<<<<<<< HEAD
-<<<<<<< HEAD
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Pelatihan <span className="text-red-500">*</span></label>
-              <select 
-                name="pelatihanId" 
-                value={selectedPelatihanId}
-                onChange={(e) => setSelectedPelatihanId(e.target.value)}
-                required 
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800" 
-                disabled={isLoadingPelatihan}
-              >
-                <option value="">{isLoadingPelatihan ? "Memuat data pelatihan..." : "-- Pilih Pelatihan --"}</option>
-                {pelatihanList.map((pelatihan) => (
-                  <option key={pelatihan.id} value={pelatihan.id}>
-                    {pelatihan.name} - {formatTanggal(pelatihan.tanggal)}
-                  </option>
-                ))}
-=======
               <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Jadwal <span className="text-red-500">*</span></label>
-              <select 
-                required 
-=======
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                Pilih Jadwal <span className="text-red-500">*</span>
-              </label>
               <select
+                name="jadwalId"
                 required
->>>>>>> 9e897c3ead7b074f21c607b8e9b02a24f13a896b
+                value={selectedJadwal?.jadwalId || ""}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800"
                 disabled={isLoadingJadwal}
                 onChange={(e) => {
@@ -300,44 +252,36 @@ export function PendaftaranForm() {
                     year: "numeric",
                   }).format(new Date(jadwal.date));
                   const metodeText = jadwal.metode || "";
+                  const pelatihanName = jadwal.pelatihanName || "Pelatihan";
                   return (
                     <option key={jadwal.id} value={jadwal.id}>
-                      {jadwal.pelatihanName} - {tanggal} {metodeText}
+                      {pelatihanName} - {tanggal} {metodeText}
                     </option>
                   );
                 })}
->>>>>>> 8c6b9d81fab79cf49f2ef92fac7dd999ad3ab543
               </select>
             </div>
-
-            {selectedPelatihanId && (
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Jadwal <span className="text-red-500">*</span></label>
-                <select 
-                  name="jadwalId" 
-                  required 
-                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800" 
-                  disabled={isLoadingJadwal || jadwalList.length === 0}
-                >
-                  <option value="">{isLoadingJadwal ? "Memuat jadwal..." : jadwalList.length === 0 ? "Tidak ada jadwal tersedia" : "-- Pilih Jadwal --"}</option>
-                  {jadwalList.map((jadwal) => (
-                    <option key={jadwal.id} value={jadwal.id}>
-                      {formatTanggal(jadwal.date)} - {jadwal.location || "Lokasi TBD"} ({jadwal.metode || "Metode TBD"})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             <div>
               <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                 Metode Pelatihan <span className="text-red-500">*</span>
               </label>
-              <select name="metode" required className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <select 
+                name="metode" 
+                required 
+                value={selectedJadwal?.metode === "online" ? "ONLINE" : selectedJadwal?.metode === "offline" ? "OFFLINE" : ""}
+                disabled={!selectedJadwal}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800 disabled:cursor-not-allowed"
+              >
                 <option value="">-- Pilih Metode --</option>
                 <option value="ONLINE">Online (Daring)</option>
                 <option value="OFFLINE">Offline (Tatap Muka)</option>
               </select>
+              {selectedJadwal && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Metode otomatis terisi berdasarkan jadwal yang dipilih
+                </p>
+              )}
             </div>
 
             <div>

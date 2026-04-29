@@ -97,7 +97,6 @@ export async function createPendaftaran(data: PendaftaranInput) {
 
     console.log("[PENDAFTARAN] Membuat record pendaftaran di database...");
     
-<<<<<<< HEAD
     // Replace base64 strings di data dengan URL fisik sebelum masuk ke Prisma
     const pendaftaranData: any = {
       namaLengkap: validatedData.namaLengkap,
@@ -107,11 +106,6 @@ export async function createPendaftaran(data: PendaftaranInput) {
       instansi: validatedData.instansi,
       metode: validatedData.metode,
       pelatihanId: validatedData.pelatihanId,
-=======
-    // Replace base64 strings di data dengan URL fisik dan INJECT userId sebelum masuk ke Prisma
-    const pendaftaranData = {
-      ...validatedData,
->>>>>>> 8c6b9d81fab79cf49f2ef92fac7dd999ad3ab543
       fotoKtp: fotoKtpUrl,
       ijazah: ijazahUrl,
       pasFoto: pasFotoUrl,
@@ -181,33 +175,11 @@ export async function getPendaftaranByEmail(email: string) {
 
 export async function getJadwalList() {
   try {
-<<<<<<< HEAD
-    const now = new Date();
-    const pelatihans = await prisma.pelatihan.findMany({
-      where: { 
-        status: true,
-        tanggal: {
-          gte: now, // Hanya pelatihan yang tanggalnya belum lewat
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        tanggal: true,
-        description: true,
-      },
-      orderBy: {
-        tanggal: "asc", // Urutkan dari yang paling dekat
-=======
     const jadwals = await prisma.jadwal.findMany({
       where: {
-        pelatihan: { status: true },
+        status: "AKTIF",
       },
-      select: {
-        id: true,
-        date: true,
-        metode: true,
-        pelatihanId: true,
+      include: {
         pelatihan: {
           select: {
             name: true,
@@ -216,7 +188,6 @@ export async function getJadwalList() {
       },
       orderBy: {
         date: "asc",
->>>>>>> 8c6b9d81fab79cf49f2ef92fac7dd999ad3ab543
       },
     });
 
@@ -227,6 +198,8 @@ export async function getJadwalList() {
       metode: jadwal.metode,
       pelatihanId: jadwal.pelatihanId,
       pelatihanName: jadwal.pelatihan.name,
+      location: jadwal.location,
+      status: jadwal.status,
     }));
 
     return {

@@ -61,7 +61,7 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
   };
 
   return (
-    <Card className="max-w-2xl mt-6 shadow-sm border-gray-100">
+    <Card className="max-w-2xl mt-6 shadow-sm border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
           {error && <div className="text-red-500 text-sm font-medium">{error}</div>}
@@ -87,7 +87,7 @@ export function PelatihanForm({ initialData, isEdit }: FormProps) {
             />
           </div>
 
-          <div className="flex items-center space-x-3 bg-gray-50 border-gray-100">
+          <div className="flex items-center space-x-3 bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 p-3 rounded-lg">
             <Switch
               id="status"
               checked={isStatusActive}
