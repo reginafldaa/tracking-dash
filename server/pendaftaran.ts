@@ -97,15 +97,9 @@ export async function createPendaftaran(data: PendaftaranInput) {
 
     console.log("[PENDAFTARAN] Membuat record pendaftaran di database...");
     
-    // Replace base64 strings di data dengan URL fisik sebelum masuk ke Prisma
-    const pendaftaranData: any = {
-      namaLengkap: validatedData.namaLengkap,
-      email: validatedData.email,
-      noTelp: validatedData.noTelp,
-      pekerjaan: validatedData.pekerjaan,
-      instansi: validatedData.instansi,
-      metode: validatedData.metode,
-      pelatihanId: validatedData.pelatihanId,
+    // Replace base64 strings di data dengan URL fisik dan INJECT userId sebelum masuk ke Prisma
+    const pendaftaranData = {
+      ...validatedData,
       fotoKtp: fotoKtpUrl,
       ijazah: ijazahUrl,
       pasFoto: pasFotoUrl,
@@ -113,16 +107,6 @@ export async function createPendaftaran(data: PendaftaranInput) {
       suratKerja: suratKerjaUrl || undefined,
       userId,
     };
-
-    // Tambahkan userId jika ada
-    if (validatedData.userId) {
-      pendaftaranData.userId = validatedData.userId;
-    }
-
-    // Tambahkan jadwalId jika ada
-    if (validatedData.jadwalId) {
-      pendaftaranData.jadwalId = validatedData.jadwalId;
-    }
 
     // Create pendaftaran
     const pendaftaran = await prisma.pendaftaran.create({
@@ -177,9 +161,13 @@ export async function getJadwalList() {
   try {
     const jadwals = await prisma.jadwal.findMany({
       where: {
-        status: "AKTIF",
+        pelatihan: { status: true },
       },
-      include: {
+      select: {
+        id: true,
+        date: true,
+        metode: true,
+        pelatihanId: true,
         pelatihan: {
           select: {
             name: true,
@@ -198,8 +186,6 @@ export async function getJadwalList() {
       metode: jadwal.metode,
       pelatihanId: jadwal.pelatihanId,
       pelatihanName: jadwal.pelatihan.name,
-      location: jadwal.location,
-      status: jadwal.status,
     }));
 
     return {
@@ -214,152 +200,108 @@ export async function getJadwalList() {
   }
 }
 
-export async function getJadwalByPelatihanId(pelatihanId: string) {
-  try {
-    const jadwals = await prisma.jadwal.findMany({
-      where: { 
-        pelatihanId,
-      },
-      select: {
-        id: true,
-        date: true,
-        location: true,
-        status: true,
-        metode: true,
-      },
-      orderBy: {
-        date: "asc",
-      },
-    });
-
-    return {
-      success: true,
-      data: jadwals,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: "Gagal mengambil data jadwal",
-    };
-  }
-}
-
 // ============================================================================
-// USER DASHBOARD DATA
+// GET USER DASHBOARD DATA
 // ============================================================================
-
 export async function getUserDashboardData() {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return {
         success: false,
-        error: "User not authenticated",
+        error: "User tidak terautentikasi",
       };
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const userId = session.user.id;
+
+    // Ambil semua pendaftaran user dengan relasi
+    const pendaftarans = await prisma.pendaftaran.findMany({
+      where: { userId },
       include: {
-        pendaftarans: {
-          include: {
-            jadwal: {
-              include: {
-                pelatihan: true,
-              },
-            },
-            absensis: true,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-        },
+        pelatihan: true,
+        jadwal: true,
+        absensis: true,
+        sertifikats: true,
+      },
+      orderBy: {
+        createdAt: "desc",
       },
     });
 
-    if (!user) {
-      return {
-        success: false,
-        error: "User not found",
-      };
-    }
-
-    const pendaftarans = user.pendaftarans;
-    const totalPendaftaran = pendaftarans.length;
-    const totalSertifikat = pendaftarans.filter(p => p.status === "LULUS").length;
-    
-    // Find active pelatihan (non-completed, non-failed)
-    const activePendaftaran = pendaftarans.find(p => p.status !== "LULUS" && p.status !== "GAGAL");
-    
-    let progressPercent = 0;
-    let progressText = "Belum Terdaftar";
-    
-    if (activePendaftaran) {
-      switch (activePendaftaran.status) {
-        case "MENUNGGU":
-          progressPercent = 25;
-          progressText = "Menunggu Konfirmasi";
-          break;
-        case "PROSES":
-          progressPercent = 50;
-          progressText = "Sedang Berlangsung";
-          break;
-        case "LULUS":
-          progressPercent = 100;
-          progressText = "Selesai";
-          break;
-        default:
-          progressText = activePendaftaran.status;
-      }
-    } else if (totalSertifikat > 0) {
-      progressPercent = 100;
-      progressText = "Selesai";
-    }
-
-    const activePelatihan = activePendaftaran ? {
-      nama: activePendaftaran.jadwal?.pelatihan?.name || "Pelatihan",
-      tanggal: activePendaftaran.jadwal?.date || activePendaftaran.createdAt,
-      status: activePendaftaran.status,
-      hasAbsensi: activePendaftaran.absensis && activePendaftaran.absensis.length > 0,
-    } : null;
-
-    // Get recent registrations
-    const recentPendaftaran = pendaftarans.slice(0, 5).map(p => ({
-      id: p.id,
-      nama: p.namaLengkap,
-      pelatihan: p.jadwal?.pelatihan?.name || "Pelatihan",
-      status: p.status,
-      tanggal: p.createdAt,
-    }));
-
-    // Get riwayat pelatihan (completed ones)
-    const riwayatPelatihan = pendaftarans
-      .filter(p => p.status === "LULUS" || p.status === "GAGAL")
-      .slice(0, 5)
-      .map(p => ({
+    // Hitung progress dan kumpulkan data
+    const activePelatihan = pendaftarans
+      .filter((p) => ["MENUNGGU", "PROSES"].includes(p.status))
+      .map((p) => ({
         id: p.id,
-        nama: p.jadwal?.pelatihan?.name || "Pelatihan",
+        nama: p.pelatihan.name,
+        status: p.status,
+        tanggal: p.jadwal.date,
+        hasAbsensi: p.absensis.length > 0,
+      }))
+      .sort((a) => (a.hasAbsensi ? -1 : 1))[0] || null;
+
+    // Hitung progress berdasarkan aktivitas terbaru
+    let progressPercent = 0;
+    let progressText = "Belum daftar pelatihan";
+
+    if (pendaftarans.length === 0) {
+      progressPercent = 0;
+      progressText = "Belum daftar pelatihan";
+    } else {
+      const sortedByStatus = pendaftarans.sort((a, b) => {
+        const statusOrder = { LULUS: 4, GAGAL: 1, PROSES: 2, MENUNGGU: 2 };
+        return (statusOrder[b.status as keyof typeof statusOrder] || 0) - 
+               (statusOrder[a.status as keyof typeof statusOrder] || 0);
+      });
+
+      const latest = sortedByStatus[0];
+
+      if (latest.status === "LULUS") {
+        progressPercent = 100;
+        progressText = "Pelatihan Selesai (Lulus)";
+      } else if (latest.status === "GAGAL") {
+        progressPercent = 0;
+        progressText = "Pelatihan Tidak Lulus";
+      } else if (latest.absensis.length > 0) {
+        progressPercent = 75;
+        progressText = "Sedang Pelatihan (Absen)";
+      } else if (["MENUNGGU", "PROSES"].includes(latest.status)) {
+        progressPercent = 25;
+        progressText = "Sudah Daftar";
+      }
+    }
+
+    // Riwayat pelatihan (yang sudah selesai/gagal)
+    const riwayatPelatihan = pendaftarans
+      .filter((p) => ["LULUS", "GAGAL"].includes(p.status))
+      .map((p) => ({
+        id: p.id,
+        nama: p.pelatihan.name,
         status: p.status,
         tanggal: p.createdAt,
-        sertifikat: p.status === "LULUS",
+        sertifikat: p.sertifikats.length > 0,
       }));
+
+    // Total sertifikat (dari pendaftaran yang LULUS)
+    const totalSertifikat = pendaftarans
+      .filter((p) => p.status === "LULUS")
+      .reduce((sum, p) => sum + p.sertifikats.length, 0);
 
     return {
       success: true,
       data: {
-        userName: user.name,
-        totalPendaftaran,
-        totalSertifikat,
         progressPercent,
         progressText,
         activePelatihan,
-        recentPendaftaran,
         riwayatPelatihan,
+        totalSertifikat,
+        totalPendaftaran: pendaftarans.length,
       },
     };
   } catch (error) {
-    console.error("Error fetching user dashboard data:", error);
+    console.error("[DASHBOARD] Error:", error);
     return {
       success: false,
       error: "Gagal mengambil data dashboard",

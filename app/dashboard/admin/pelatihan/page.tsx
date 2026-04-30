@@ -20,21 +20,12 @@ export default async function PelatihanPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-black-100">
-          Kelola Pelatihan
-        </h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-2">
-          Tambah, ubah, dan hapus data pelatihan untuk peserta.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Kelola Pelatihan</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2">Tambah, ubah, dan hapus data pelatihan untuk peserta.</p>
       </div>
 
       <Suspense fallback={<div className="h-48 flex items-center justify-center border rounded-md bg-gray-50 dark:bg-gray-900/20">Loading...</div>}>
-        <PelatihanTable 
-          data={data} 
-          total={total} 
-          totalPages={totalPages} 
-          currentPage={page} 
-        />
+        <PelatihanTable data={data} total={total} totalPages={totalPages} currentPage={page} />
       </Suspense>
     </div>
   );

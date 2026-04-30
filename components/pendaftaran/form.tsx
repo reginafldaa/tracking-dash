@@ -1,58 +1,34 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPendaftaran, getJadwalList } from "@/server/pendaftaran";
-import { type PendaftaranInput } from "@/server/pendaftaran.schema";
-import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-
-// Tipe data untuk daftar pelatihan
-type PelatihanOption = {
-  id: string;
-  name: string;
-  tanggal: Date;
-  description?: string | null;
-};
-
-type JadwalOption = {
-  id: string;
-  date: Date;
-  location?: string | null;
-  status: string;
-  metode?: string | null;
-  pelatihanName?: string;
-  pelatihanId?: string;
-};
+import { createPendaftaran, getJadwalList } from "@/server/pendaftaran";
+import { type PendaftaranInput, type JadwalOption } from "@/server/pendaftaran.schema";
 
 export function PendaftaranForm() {
-  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  const [pelatihanList, setPelatihanList] = useState<PelatihanOption[]>([]);
-  const [isLoadingPelatihan, setIsLoadingPelatihan] = useState(true);
-  const [selectedPelatihanId, setSelectedPelatihanId] = useState<string>("");
-  const [jadwalList, setJadwalList] = useState<JadwalOption[]>([]);
-  const [isLoadingJadwal, setIsLoadingJadwal] = useState(false);
+  const [jadwalList, setJadwalList] = useState<(JadwalOption & { pelatihanId: string })[]>([]);
   const [selectedJadwal, setSelectedJadwal] = useState<{
     jadwalId: string;
-    pelatihanId?: string;
-    metode?: string | null;
+    pelatihanId: string;
+    metode: string | null;
   } | null>(null);
+  const [isLoadingJadwal, setIsLoadingJadwal] = useState(true);
 
   useEffect(() => {
     async function fetchJadwal() {
       try {
-        setIsLoadingJadwal(true);
         const response = await getJadwalList();
         if (response.success && response.data) {
-          const jadwals = response.data as JadwalOption[];
+          const jadwals = response.data as any;
           setJadwalList(jadwals);
 
           // Auto-select jadwal dari query parameter jika ada
           const jadwalIdParam = searchParams.get("jadwalId");
           if (jadwalIdParam) {
-            const jadwal = jadwals.find((j) => j.id === jadwalIdParam);
+            const jadwal = jadwals.find((j: any) => j.id === jadwalIdParam);
             if (jadwal) {
               setSelectedJadwal({
                 jadwalId: jadwal.id,
@@ -70,26 +46,6 @@ export function PendaftaranForm() {
     }
     fetchJadwal();
   }, [searchParams]);
-
-  // Helper untuk format tanggal
-  const formatTanggal = (date: Date) => {
-    return new Date(date).toLocaleDateString("id-ID", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  // Helper untuk mengubah File menjadi Base64 (Data URL)
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -114,19 +70,20 @@ export function PendaftaranForm() {
         jadwalId: selectedJadwal.jadwalId,
         pelatihanId: selectedJadwal.pelatihanId,
         metode: formData.get("metode") as "ONLINE" | "OFFLINE",
-        userId: session?.user?.id,
       };
 
       const filesToProcess = ["fotoKtp", "ijazah", "pasFoto", "buktiTransfer", "suratKerja"];
 
-      // Upload File via API UploadThing
+      // --- PERUBAHAN: Upload File via API UploadThing ---
       for (const field of filesToProcess) {
         const file = formData.get(field) as File;
 
         if (file && file.size > 0) {
+          // Siapkan file untuk dikirim ke API
           const uploadData = new FormData();
           uploadData.append("file", file);
 
+          // Panggil API upload yang sudah kita hubungkan ke UploadThing
           const uploadRes = await fetch("/api/pendaftaran/upload", {
             method: "POST",
             body: uploadData,
@@ -135,6 +92,7 @@ export function PendaftaranForm() {
           const uploadResult = await uploadRes.json();
 
           if (uploadResult.success) {
+            // Simpan URL dari UploadThing (https://utfs.io/....) ke objek data
             data[field] = uploadResult.url;
           } else {
             throw new Error(`Gagal mengunggah ${field}`);
@@ -142,14 +100,12 @@ export function PendaftaranForm() {
         }
       }
 
+      // Kirim data (yang sekarang berisi URL utfs.io, bukan Base64) ke database
       const response = await createPendaftaran(data as PendaftaranInput);
 
       if (response.success) {
         setMessage({ type: "success", text: "Pendaftaran berhasil dikirim! Silakan tunggu konfirmasi selanjutnya." });
         (e.target as HTMLFormElement).reset();
-        setSelectedPelatihanId("");
-        setJadwalList([]);
-        setSelectedJadwal(null);
       } else {
         setMessage({ type: "error", text: response.error || "Terjadi kesalahan saat menyimpan data." });
       }
@@ -224,9 +180,10 @@ export function PendaftaranForm() {
             <h3 className="text-lg font-semibold border-b pb-2 text-gray-900 dark:text-white">Pelatihan & Dokumen</h3>
 
             <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Pilih Jadwal <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                Pilih Jadwal <span className="text-red-500">*</span>
+              </label>
               <select
-                name="jadwalId"
                 required
                 value={selectedJadwal?.jadwalId || ""}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white disabled:bg-gray-100 disabled:dark:bg-gray-800"
@@ -252,10 +209,9 @@ export function PendaftaranForm() {
                     year: "numeric",
                   }).format(new Date(jadwal.date));
                   const metodeText = jadwal.metode || "";
-                  const pelatihanName = jadwal.pelatihanName || "Pelatihan";
                   return (
                     <option key={jadwal.id} value={jadwal.id}>
-                      {pelatihanName} - {tanggal} {metodeText}
+                      {jadwal.pelatihanName} - {tanggal} {metodeText}
                     </option>
                   );
                 })}
@@ -279,7 +235,7 @@ export function PendaftaranForm() {
               </select>
               {selectedJadwal && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Metode otomatis terisi berdasarkan jadwal yang dipilih
+                  ℹ️ Metode otomatis terisi berdasarkan jadwal yang dipilih
                 </p>
               )}
             </div>

@@ -1,7 +1,7 @@
 import { pool } from "@/lib/db";
 import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prisma"
-import { pendaftaranSchema, type PendaftaranInput } from "@/server/pendaftaran.schema";
+import { prisma } from "@/lib/prisma";
+import { buildCertificatePDF } from "@/lib/generateSertifikat";
 
 export const dynamic = "force-dynamic";
 
@@ -37,90 +37,25 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    
-    // Handle two types of POST requests:
-    // 1. From form (via createPendaftaran Server Action) - sudah dihandle di server/pendaftaran.ts
-    // 2. Direct API calls (legacy) - userId, jadwalId, documentUrl
-    
-    const { userId, jadwalId, documentUrl, status = 'MENUNGGU', ...otherFields } = body;
+    const { userId, jadwalId, documentUrl, status = "MENUNGGU" } = body;
 
-    // Jika ada userId dan jadwalId (legacy format)
-    if (userId && jadwalId) {
-      if (!documentUrl) {
-        return Response.json(
-          { success: false, message: 'documentUrl wajib diisi untuk format ini' },
-          { status: 400 }
-        );
-      }
-
-      const id = randomUUID();
-      const result = await pool.query(
-        `INSERT INTO "Pendaftaran"
-          ("id", "userId", "jadwalId", "documentUrl", status, "createdAt", "updatedAt")
-         VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-         RETURNING *`,
-        [id, String(userId), String(jadwalId), documentUrl, status]
-      );
-
-      return Response.json({ 
-        success: true, 
-        data: result.rows[0],
-        message: 'Pendaftaran berhasil dibuat via API'
-      });
+    if (!userId || !jadwalId) {
+      return Response.json({ success: false, message: "userId dan jadwalId wajib diisi" }, { status: 400 });
     }
 
-    // Jika ada field lain, gunakan format dari form (validate dengan schema)
-    const validatedData = pendaftaranSchema.parse(body);
-    
-    // Cek duplikat
-    const existing = await prisma.pendaftaran.findFirst({
-      where: {
-        email: validatedData.email,
-        pelatihanId: validatedData.pelatihanId,
-      },
-    });
-
-    if (existing) {
-      return Response.json(
-        { success: false, message: 'Anda sudah mendaftar untuk pelatihan ini' },
-        { status: 400 }
-      );
-    }
-
-    // Create via Prisma
-    const pendaftaran = await prisma.pendaftaran.create({
-      data: {
-        namaLengkap: validatedData.namaLengkap,
-        email: validatedData.email,
-        noTelp: validatedData.noTelp,
-        pekerjaan: validatedData.pekerjaan,
-        instansi: validatedData.instansi,
-        metode: validatedData.metode,
-        pelatihanId: validatedData.pelatihanId,
-        fotoKtp: otherFields.fotoKtp || validatedData.fotoKtp,
-        ijazah: otherFields.ijazah || validatedData.ijazah,
-        pasFoto: otherFields.pasFoto || validatedData.pasFoto,
-        buktiTransfer: otherFields.buktiTransfer || validatedData.buktiTransfer,
-        suratKerja: otherFields.suratKerja || validatedData.suratKerja,
-        userId: validatedData.userId,
-        jadwalId: validatedData.jadwalId,
-      },
-      include: {
-        pelatihan: true,
-      },
-    });
-
-    return Response.json({ 
-      success: true, 
-      data: pendaftaran,
-      message: 'Pendaftaran berhasil dibuat via API'
-    });
-  } catch (error: any) {
-    console.error('POST ERROR:', error);
-    return Response.json(
-      { success: false, message: error.message || 'Gagal membuat pendaftaran' },
-      { status: 500 }
+    const id = randomUUID();
+    const result = await pool.query(
+      `INSERT INTO "Pendaftaran"
+        ("id", "userId", "jadwalId", "documentUrl", status, "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+       RETURNING *`,
+      [id, String(userId), String(jadwalId), documentUrl, status],
     );
+
+    return Response.json({ success: true, data: result.rows[0] });
+  } catch (error: any) {
+    console.error("POST ERROR:", error);
+    return Response.json({ success: false, message: error.message }, { status: 500 });
   }
 }
 

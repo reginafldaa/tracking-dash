@@ -4,6 +4,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const fileUrl = searchParams.get("file");
 
+  // 1. Tangkap parameter "name" dari URL
+  const userName = searchParams.get("name") || "Peserta";
+
   if (!fileUrl) {
     return new NextResponse("URL file tidak diberikan", { status: 400 });
   }
@@ -17,10 +20,21 @@ export async function GET(request: Request) {
 
     const arrayBuffer = await response.arrayBuffer();
 
-    // PERBAIKAN DI SINI
+    // 2. Bersihkan nama user dari spasi dan karakter spesial agar aman untuk nama file
+    const safeUserName = userName.replace(/[^a-zA-Z0-9 ]/g, "").replace(/\s+/g, "_");
+
+    // 3. Gabungkan nama file dengan nama user
     let fileName = fileUrl.split("/").pop();
+
+    // Jika dari UploadThing (tidak ada ekstensi)
     if (!fileName || !fileName.includes(".")) {
-      fileName = "Sertifikat_Pelatihan.pdf";
+      // Hasilnya misal: Sertifikat_Pelatihan_Budi_Santoso.pdf
+      fileName = `Sertifikat_Pelatihan_${safeUserName}.pdf`;
+    } else {
+      // Jika ternyata URL-nya sudah ada ekstensinya, kita sisipkan namanya
+      const nameParts = fileName.split(".");
+      const ext = nameParts.pop(); // Ambil ekstensinya (misal: pdf)
+      fileName = `Sertifikat_Pelatihan_${safeUserName}.${ext}`;
     }
 
     return new NextResponse(arrayBuffer, {
